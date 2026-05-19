@@ -1,0 +1,20 @@
+---
+name: a10-add-project
+description: "새 프로젝트 등록"
+---
+
+# 새 프로젝트 등록
+
+1. `projects/_dashboard.md`에서 최신 PRJ ID 확인 → 다음 순번 채번
+   - 단일 모듈 귀속: `PRJ-{YYYY}-{모듈코드}-{NNN}` (신규 규칙, 예 `PRJ-2026-LTE-010`)
+   - 수명업무·크로스모듈: `PRJ-{YYYY}-{NNN}` (구규칙)
+   - 모듈 코드·상세 규칙은 `_dashboard.md` "ID 채번 규칙" 섹션 참조
+2. 사용자에게 필수 정보 확인: 프로젝트명, 유형, 모듈, 기간, PM
+3. `projects/_templates/project-detail.md` 복사
+4. 01. 프로젝트 개요 작성
+5. `_dashboard.md`에 행 추가
+6. 해당 모듈 `tasks/_current.md`에 프로젝트 참조 추가
+
+**사용 예시:**
+- `/a10-add-project 법무지원실 요구사항 대응`
+- `/a10-add-project CODIT PoC`
