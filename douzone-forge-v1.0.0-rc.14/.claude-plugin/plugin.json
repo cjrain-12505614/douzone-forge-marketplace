@@ -1,0 +1,78 @@
+{
+  "name": "douzone-forge",
+  "version": "1.0.0-rc.14",
+  "description": "Amaranth 10 통합 업무 프레임워크. v1.0.0 RC — Beta 3인 합류 직전 안정화 게이트. Phase Q+R+R++S+T+U+V(진단)+V(V-06+V-07 패치)+V(rc.3 갭 패치)+W-1 S-09+rc.5 통합+W-1 C-01+W-1 S-01+W-1 S-05+W-1 S-06 누적 자산 (Skills 54·commands 46·hooks 17·rules 12·SSoT 11 신규). 격차 0 도달 + 학습 L 등급 4건 강제 메커니즘 신설(Hook 4·Rule 4)+HIGH 메타 누설 환수+9 모듈 _README 신설+deliverables 골격+dz-personal-init 본인 R&R 자동 정착+dz-frontend-design Cowork 폴백 미러 신설(TASK-S-05 갭)+S-09 14+2 에이전트 표준 정착(ORACLE~HELM 14 + AVATAR·NEXUS 2 + AgentDefinition 표준 필드 + Subagent 4 가치 + 자비스 학습 #20·#21·#22)+rc.5 함정 #6 영속화(변종 3건 + sub-변종 B-③ 매트릭스 + 의제 7 SSoT 신설 + build.sh uninstall+install 격상 + AC-6 tee 로그 영속화)+C-01 답변 언어 톤 표준 정착(SSoT 4 핵심 룰 + answer-tone-check.sh PostToolUse hook + 자비스 학습 #23 추가)+S-01 워크스페이스 폴더 구조 표준 정착(SSoT 5 핵심 룰 + folder-structure-check.sh PostToolUse hook + 자비스 학습 #24 추가)+S-05 협업 표준 보강(SSoT §3.4·§5.3·§10·§11 신설 + 학습 #25 결재 단계 C 옵션 신설 패턴 + 미러 스킬 후보 식별 산출물)+S-06 규칙 폴더 운영 권한 표준 정착(SSoT 운영 주체 2 분리 + 자산 영역 매트릭스 15건 + Enterprise 정책 활용 매트릭스 + 강제 메커니즘 3 본문 + rules-protection-check.sh PostToolUse hook + 자비스 학습 #26 추가).",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/db-migration-guard.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/structure-awareness.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/code-quality-reminder.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/security-auto-trigger.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/build-verify-reminder.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/prj-code-naming-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/answer-tone-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/output-location-policy.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/prj-filename-policy.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/folder-purpose-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/folder-structure-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/rules-protection-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/link-integrity-check.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
