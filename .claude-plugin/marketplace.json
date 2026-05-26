@@ -8,9 +8,9 @@
   "plugins": [
     {
       "name": "douzone-forge",
-      "source": "./douzone-forge-v1.0.0-rc.19",
+      "source": "./douzone-forge-v1.0.0-rc.20",
       "description": "Amaranth 10 통합 업무 프레임워크. 모듈 맥락(GNB/LNB)·프로젝트 포트폴리오·Google Sheets·QA 시나리오·하네스 4계층(CLAUDE.md·Rules·Permissions·Hooks)·14+2 에이전트 표준(ORACLE~HELM + AVATAR·NEXUS).",
-      "version": "1.0.0-rc.19"
+      "version": "1.0.0-rc.20"
     }
   ]
 }
