@@ -8,9 +8,9 @@
   "plugins": [
     {
       "name": "douzone-forge",
-      "source": "./douzone-forge-v1.3.5",
+      "source": "./douzone-forge-v1.3.6",
       "description": "douzone-forge는 더존비즈온 임직원이 기획·설계·디자인·퍼블리싱·개발·구축·영업 등 모든 업무를 축적된 맥락을 기준으로 수행하도록 돕는 통합 업무 프레임워크입니다. 특정 영역에 국한되지 않으며, 더존 안에서 Amaranth 10(ERP·그룹웨어)을 활용해 원피스(ONEFFICE 전자결재) 문서 생성·분석·업무보고 등 다양한 업무를 맥락 기반으로 자동화합니다. 변경 이력은 CHANGELOG 참조.",
-      "version": "1.3.5"
+      "version": "1.3.6"
     }
   ]
 }
