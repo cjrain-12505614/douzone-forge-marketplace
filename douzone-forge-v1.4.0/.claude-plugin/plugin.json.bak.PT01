@@ -1,0 +1,41 @@
+{
+  "name": "amaranth10-claude-forge",
+  "version": "0.12.2",
+  "description": "Amaranth 10 통합 업무 프레임워크. 모듈 맥락(GNB/LNB)·프로젝트 포트폴리오·Google Sheets·QA 시나리오 + 하네스 4계층(CLAUDE.md·Rules·Permissions·Hooks) 자가진화 체계.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/db-migration-guard.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/code-quality-reminder.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/security-auto-trigger.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/build-verify-reminder.sh"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/prj-code-naming-check.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

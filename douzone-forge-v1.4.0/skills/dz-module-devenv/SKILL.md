@@ -1,0 +1,184 @@
+---
+name: dz-module-devenv
+description: 특정 Amaranth 10 모듈의 로컬 개발환경(백엔드+프런트)을 깨끗한 클론으로 세팅하고 VSCode로 구동·검증하는 스킬. 사용자가 "CRM 개발환경 띄워줘"·"법무관리 모듈 로컬 세팅"·"X 모듈 개발환경 구성해줘"·"모듈 풀스택 로컬 개발 세팅"·"새 모듈 클론해서 환경 만들어줘" 등을 요청할 때 활성. 입력=모듈명 + 그 모듈 개발자 application.yml. BE(amaranth10-{모듈})·FE(klago-ui-{모듈}-micro + 번들러 klago-ui-micro)를 iCloud 밖에 클론 → 설정(개발자 yml 170 통일·로컬 CORS·.vscode) → 미선언 의존 자동 해소·node-sass(Apple Silicon) dart-sass 폴백 → 빌드·구동·헬스·CORS 검증 → 모듈 가이드 산출. 로그인(비밀번호)·VSCode F5는 사람 핸드오프. 단일 출처(SSoT) = 규칙/프로세스/개발환경-구성-표준.md.
+version: 0.1.0
+---
+
+# 모듈 로컬 개발환경 세팅 (dz-module-devenv)
+
+> **의존 SSoT(단일 출처, Single Source of Truth)**: [`규칙/프로세스/개발환경-구성-표준.md`](../../../규칙/프로세스/개발환경-구성-표준.md) — 환경 5단계·스택·프로파일·FE 절차·트러블슈팅의 정본. 본 스킬은 그 표준을 **특정 모듈에 적용하는 실행 절차**다.
+> **검증 근거**: CRM 모듈 풀스택 로컬 실증(2026-06-17, end-to-end 성공) + 법무관리(LTE) 실증(2026-06-16).
+
+**용어 풀이**: BE(백엔드, 서버측) · FE(프런트엔드, 화면측) · SSoT(단일 출처) · 번들러(여러 화면 모듈을 묶어 구동하는 FE 작업공간 klago-ui-micro) · 워크스페이스(yarn이 여러 패키지를 함께 묶어 관리하는 단위) · 미선언 의존(소스가 import하지만 package.json에 안 적힌 패키지) · babelTargets(번들러가 소스를 변환할 대상 패키지 목록) · dart-sass(순수 JS로 된 Sass 컴파일러 `sass`, 네이티브 빌드 불필요) · node-sass(C++ 네이티브 Sass 컴파일러, Apple Silicon에서 빌드 난항) · 인증 Redis(로그인 세션을 저장하는 Redis의 13번 DB) · dev-login(개발 서버 계정으로 로그인) · 핸드오프(자비스가 못 하는 부분을 사람에게 넘김)
+
+---
+
+## 0. 한 줄 정의
+
+모듈명과 그 모듈 개발자의 `application.yml` 하나를 받아, **백엔드와 프런트를 깨끗한 클론에 세팅하고 VSCode로 띄울 수 있는 상태까지 자동 구성·검증**한다. 로그인 비밀번호와 VSCode F5만 사람이 한다.
+
+---
+
+## 1. 트리거 / 발동
+
+**사용자 호출**(한글):
+- "{모듈} 개발환경 띄워줘" · "{모듈} 모듈 로컬 세팅" · "{모듈} 풀스택 로컬 개발 환경 구성"
+- "새 모듈 클론해서 VSCode 환경 만들어줘" · "모듈 개발환경 표준대로 세팅"
+
+**선행 확인**: 사내망(회사 WiFi/VPN) 접속 상태여야 함(개발 DB·Redis·GitLab·Nexus 도달 필요).
+
+---
+
+## 2. 입력과 모듈 메타 도출
+
+### 2.1 입력(사람이 제공)
+1. **모듈명** (예: `crm`, `lte`, `board`, `kiss`, `ab`)
+2. **그 모듈 개발자의 `application.yml`** — 신규 개발 서버(현행 14.41.2.170 계열)를 가리키는 실제 설정. 비밀번호 포함 → **로컬 클론에만** 두고 forge 트리·git push 금지.
+
+### 2.2 규칙으로 도출(자비스가 계산)
+| 항목 | 규칙 | CRM 예시 |
+|---|---|---|
+| BE 레포 | `http://14.41.55.45:8089/dz-springboot/amaranth10-{모듈}.git` | amaranth10-crm |
+| FE 모듈 레포 | `http://14.41.55.45:8089/microfront/klago-ui-{모듈}-micro.git` | klago-ui-crm-micro |
+| FE 번들러(공유) | `http://14.41.55.45:8089/KLAGO/klago-ui-micro.git` | (모듈 공통, 1회 클론) |
+| BE 포트·context | 개발자 yml `server.port` / `server.servlet.context-path` | 8020 / `/crm` |
+| FE 모듈 코드 | FE 모듈 `package.json` `moduleCode` | `crm` |
+| 클론 위치 | `~/devenv-poc/` (iCloud 밖, 삭제 예정) | |
+
+> `module-overview.md`·소스 프로파일([`Amaranth10/_소스분석/profiles/`](../../../Amaranth10/_소스분석/profiles/))로 레포 그룹·이름을 교차 확인. 그룹이 다르면(예: gw 계열) 실측 후 보정.
+
+---
+
+## 3. 사전 점검 (1회)
+
+```bash
+# 도구
+java -version            # JDK 21 (Homebrew openjdk@21)
+node -v ; nvm ls         # FE는 Node 16 필요 (nvm use 16)
+yarn -v                  # 1.22.x
+# 사내망 도달성 (예: 170 신규 backing)
+for p in 32000 32002 32031; do nc -z -G 3 14.41.2.170 $p && echo "✅170:$p"; done
+nc -z -G 3 14.41.55.45 8089   # GitLab
+nc -z -G 3 14.41.55.45 30000  # Nexus
+curl -s -o /dev/null -w "%{http_code}\n" https://develop.amaranth10.co.kr  # 200
+# FE 미러 우회(insteadOf) — 1회 (git.duzon.com·sbfigma 차단 우회). 표준 §6.2
+git config --global url."http://14.41.55.45:8089/KLAGO/".insteadOf "http://git.duzon.com/uiux-busan/"
+git config --global url."http://14.41.55.45:8089/".insteadOf "https://sbfigma.amaranth10.co.kr/"
+```
+
+⛔ **iCloud 함정**: `보관함(Local)`(iCloud 동기화) 안에서 빌드 금지 — `" 2.java"` 중복이 컴파일을 깬다. 반드시 `~/devenv-poc` 등 **iCloud 밖**에서 클론·빌드.
+
+---
+
+## 4. 백엔드(BE) 절차
+
+```bash
+cd ~/devenv-poc
+git clone -b master http://14.41.55.45:8089/dz-springboot/amaranth10-{모듈}.git
+cd amaranth10-{모듈}
+```
+
+1. **설정 교체** ⭐ — 레포 기본 `config/application.yml`은 옛 서버(189)를 가리킨다. **개발자 yml(170 통일)로 전면 교체**(원본은 `.repo-189.bak`로 백업). 이유: 인증 Redis가 `base` 설정을 따르므로 base를 로그인 서버로 통일해야 함(표준 §7, 함정 ③).
+   - 교체 yml에 두 줄 추가: `spring.config.import: optional:classpath:/config/application.yml`(있으면 유지 — MCP 등 클래스패스 설정 로드) + `Klago.localCors: true`(아래 CORS 게이트)
+2. **로컬 CORS 신설** — `src/main/java/klago/config/LocalDevCorsConfig.java`(모듈 무관 동일 코드, 본 스킬 `assets/LocalDevCorsConfig.java`). `WebMvcConfigurer.addCorsMappings`로 `localhost:3000` 허용, 게이트 `@ConditionalOnProperty(name="Klago.localCors", havingValue="true")` → 운영엔 키 없어 미발동. (앱에 Spring Security 없어 MVC가 프리플라이트 403 거절하므로 필요 — 함정 참조)
+3. **`.vscode/`** — `launch.json`(mainClass `klago.{모듈대문자}Application`, cwd=`${workspaceFolder}`, env `Amaranth10_JSPT`=placeholder)·`settings.json`(JDK21 실경로 `/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`)·`extensions.json`(Java pack). 본 스킬 `assets/be-vscode/` 템플릿 사용, mainClass만 모듈별 치환.
+4. **빌드·구동 검증**(CLI — VSCode F5와 동등):
+   ```bash
+   export JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
+   export Amaranth10_JSPT="localdev-no-enc"   # ENC() 없으면 무해
+   ./gradlew clean compileJava                 # CORS 클래스 컴파일 확인
+   ./gradlew bootRun --console=plain           # 백그라운드 → "Started ...Application"
+   curl -s http://localhost:{포트}/{모듈}/actuator/health   # {"status":"UP"} = 170 DB 연결 OK
+   # CORS: 실제 컨트롤러 경로로 검증 (actuator는 MVC addCorsMappings 비대상)
+   curl -si -X OPTIONS http://localhost:{포트}/{모듈}/{컨트롤러경로} \
+     -H "Origin: http://localhost:3000" -H "Access-Control-Request-Method: POST" | grep -i Access-Control-Allow-Origin
+   ```
+   - 컨트롤러 경로는 `grep -rhoE '@(Get|Post|Request)Mapping\("/[^"]+"' src/main/java/.../api | head` 로 하나 추출.
+
+⛔ **가드레일**: `/{모듈}/sqlUpdate` (POST) **절대 호출 금지** — 부팅은 DB를 변경하지 않지만(DBPatchInit은 빈만 생성, start() 미호출), 이 엔드포인트만이 공유 DB에 DDL/DML을 실행한다.
+
+---
+
+## 5. 프런트엔드(FE) 절차
+
+```bash
+cd ~/devenv-poc
+# 번들러는 모듈 공통 — 이미 있으면 재사용(2번째 모듈부터 빠름)
+[ -d klago-ui-micro ] || git clone --recursive -b master http://14.41.55.45:8089/KLAGO/klago-ui-micro.git
+cd klago-ui-micro && mkdir -p packages common
+# 모듈 마이크로 추가
+[ -d packages/klago-ui-{모듈}-micro ] || (cd packages && git clone -b master http://14.41.55.45:8089/microfront/klago-ui-{모듈}-micro.git)
+source "$HOME/.nvm/nvm.sh" && nvm use 16
+yarn autoClone                       # 선언된 * 공통 의존 재귀 자동 클론
+bash {스킬}/scripts/resolve-undeclared-deps.sh   # ★ 미선언 의존 연쇄 자동 해소(클론+* 선언)
+yarn install --ignore-engines
+bash {스킬}/scripts/fix-node-sass.sh             # ★ node-sass 로드 실패 시 dart-sass 폴백
+yarn packages                        # 모듈 등록(modules.js 갱신)
+```
+
+**`.env.local`** (`micro-common/bundler/.env.local`):
+```
+REACT_APP_DEPLOY_TYPE=subDev
+REACT_APP_DEPLOY_API_URL=http://localhost:{포트}        # ★ 맨 호스트만 — context(/{모듈}) 붙이지 말 것
+REACT_APP_DEPLOY_AUTH_URL=https://develop.amaranth10.co.kr   # 개발자 yml의 Klago.groupware.domain
+```
+> ⛔ **경로 중복 함정**: FE가 모듈 접두사(`/{모듈}`)를 스스로 붙인다. API_URL에도 붙이면 `/{모듈}/{모듈}/...` → 404. **API_URL은 호스트:포트까지만.**
+
+**구동·검증**:
+```bash
+nvm use 16 && yarn start            # webpack-dev-server :3000
+# "Compiled with warnings"(실패 0) + :3000 HTTP 200 = 성공
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000
+```
+
+---
+
+## 6. 함정 카탈로그 (실증으로 확인 — 반드시 인지)
+
+| # | 증상 | 원인 | 해법 |
+|---|---|---|---|
+| ① **미선언 의존** | 컴파일 `Module not found` 또는 `experimental syntax 'jsx'` | 모듈/공통이 import하나 package.json 미선언 → autoClone 누락 + babelTargets(선언 `*`만 재귀) 제외 | `resolve-undeclared-deps.sh`: 누락 패키지 common/에 클론(microfront→ui→KLAGO 순) + **import하는 패키지의 package.json에 `"*"` 선언 추가**(babelTargets 합집합 포함) |
+| ② **node-sass 빌드 불가**(Apple Silicon) | `node-sass does not yet support ... arm64 ... runtime` | 4.14.1 arm64 prebuilt 없음(404) + 소스 컴파일 실패(Node16 V8헤더×최신 clang) + 번들 node-gyp 3.8.0이 python2 요구 | `fix-node-sass.sh`: node-sass를 옆으로 치워(`.broken`) sass-loader 8이 **dart-sass(이미 설치)** 자동 폴백 |
+| ③ **인증 얼럿 재발/재로그인** | "인증 값을 레디스에서 찾을 수 없습니다" 반복 | 인증 Lettuce가 **base `Klago.redis`** 를 읽는데 그게 로그인 세션 서버와 다름(프로파일 override는 인증 init에 미도달) | **base application.yml의 `Klago.redis`를 로그인 서버(develop 뒷단 = 170:32031 db13)로 통일.** 개발자 yml이 이미 170 통일이면 OK |
+| ④ **iCloud 컴파일 깨짐** | `ClassNotFound`·중복 빌드 | `보관함(Local)`(iCloud) `" 2.java"` 중복 | iCloud 밖(`~/devenv-poc`)에서 클론·빌드 |
+| ⑤ **CORS 403** | 화면 빈 채 "네트워크 상태가…" / OPTIONS 403 | 앱에 Spring Security 없음 → MVC DefaultCorsProcessor가 프리플라이트 거절(앞단 프록시 부재) | `LocalDevCorsConfig`(devMode/localCors 게이트) |
+| ⑥ **경로 /{모듈} 중복** | API 404 | FE 접두사 + API_URL 접두사 중복 | `.env.local` API_URL=맨 호스트 |
+
+> cosmetic(무해) 경고: `react-pdf/pdfjs Critical dependency`, `oneAI/*.types.d.ts Namespace not marked type-only`, `Browserslist outdated` — 모두 빌드 무관.
+
+---
+
+## 7. 핸드오프 (사람만 가능)
+
+- **개발자 yml 제공** — 비밀번호 포함, 매번 사람이 붙여줌(스킬은 트리에 저장 안 함)
+- **브라우저 로그인** — `localhost:3000` → develop 계정(회사코드·ID·비밀번호). 자비스는 비밀번호 입력 불가(안전정책)
+- **VSCode F5** — 자비스는 VSCode를 직접 조작 못 함(타이핑 차단). CLI로 동등 검증 후 `.vscode`를 만들어 넘긴다. 사용자가 BE 폴더 열고 F5, FE 폴더 열고 터미널 `nvm use 16 && yarn start`(또는 Run Task)
+
+검증 정직성: 자비스는 **빌드·부팅·헬스·CORS·컴파일·서빙(:3000 200)까지** 확정한다. **로그인 후 화면 데이터 렌더**는 사람 로그인 결과로 확인.
+
+---
+
+## 8. 산출·기록
+
+- **모듈 가이드**: `Amaranth10/{모듈}/개발환경-구성.md` — 본 모듈 고유값(포트·context·레포·실측 검증값·함정) + 표준 SSoT 참조. (LTE·CRM 가이드와 동형 — `dz-module-devenv/assets/module-guide-template.md` 기반)
+- **세션 기록**: `_개인/sessions/{작업}/_current.md`에 단계별 실측·마커 누적(강제원칙 2 사실 기록)
+- 표준에 새 함정 발견 시 → `개발환경-구성-표준.md` §6/§9 보강(본문 변경은 승인 후)
+
+---
+
+## 9. 서버 정리 (작업 종료 시)
+
+```bash
+lsof -ti:{포트} -sTCP:LISTEN | xargs kill   # BE
+lsof -ti:3000  -sTCP:LISTEN | xargs kill    # FE
+# 클론 삭제(재클론 복구 가능): rm -rf ~/devenv-poc/{...}
+```
+
+---
+
+## 10. 의존·연계
+
+- SSoT: [`개발환경-구성-표준.md`](../../../규칙/프로세스/개발환경-구성-표준.md) (§3 DB타게팅·§4 IDE·§5 BE셋업·§6 FE·§7 인증·§9 트러블슈팅·§10 온보딩·부록 A 샘플)
+- 비밀정보: [`비밀정보-관리-표준.md`](../../../규칙/프로세스/비밀정보-관리-표준.md) — 자격증명 트리 밖 로컬만
+- 브랜치: 기본 `master`(정상 소스). 데이터-스키마 정합 우선 시 `develop` 선택 가능(170 backing과 일치)
+- 헬퍼: `scripts/resolve-undeclared-deps.sh`(미선언 의존 해소) · `scripts/fix-node-sass.sh`(dart-sass 폴백) · `assets/`(LocalDevCorsConfig·.vscode·가이드 템플릿)
