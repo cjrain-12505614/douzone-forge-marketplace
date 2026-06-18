@@ -1,0 +1,19 @@
+{
+  "//": "dz-module-devenv 템플릿 — {{MAIN_CLASS}}(예: klago.CrmApplication), {{MODULE}}(예: crm) 치환",
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "{{MAIN_CLASS}} (로컬 develop 풀스택)",
+      "request": "launch",
+      "mainClass": "{{MAIN_CLASS}}",
+      "projectName": "amaranth10-{{MODULE}}",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "vmArgs": "-Dfile.encoding=UTF-8",
+      "env": {
+        "Amaranth10_JSPT": "localdev-no-enc"
+      }
+    }
+  ]
+}
