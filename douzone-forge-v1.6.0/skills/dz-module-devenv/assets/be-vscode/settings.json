@@ -1,0 +1,22 @@
+{
+  "//": "dz-module-devenv 템플릿 — JDK21 경로는 Homebrew openjdk@21 기준(다르면 보정)",
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.compile.nullAnalysis.mode": "disabled",
+  "java.import.gradle.enabled": true,
+  "java.import.gradle.wrapper.enabled": true,
+  "java.jdt.ls.java.home": "/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home",
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-21",
+      "path": "/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home",
+      "default": true
+    }
+  ],
+  "//boot-java": "멀티 BE를 한 워크스페이스에서 동시 F5할 때 Spring Boot 확장(vmware.vscode-spring-boot)이 라이브 데이터용 JMX 인자(com.sun.management.jmxremote.port=10000~)를 각 앱에 주입하는데, 동시 기동 시 포트를 못 나눠 'Port already in use: 10000 / BindException'으로 뒤 앱이 죽는다(함정 ⑧). false로 JMX 주입을 차단(앱 구동·디버그 무관, 라이브 메트릭 패널만 비활성). 단일 앱만 띄울 땐 무영향이라 기본값으로 둔다.",
+  "boot-java.live-information.automatic-connection.on": false,
+  "files.encoding": "utf8",
+  "files.exclude": {
+    "**/build": true,
+    "**/.gradle": true
+  }
+}
