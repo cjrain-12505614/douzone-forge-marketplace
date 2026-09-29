@@ -1,0 +1,46 @@
+{
+  "//": "dz-module-devenv 멀티모듈 동시 기동 템플릿 — ~/devenv-poc/a10-devenv.code-workspace 로 저장해 VSCode '파일 > 작업 영역(워크스페이스) 열기'로 연다. 아래는 CRM+LTE+AB 3 BE + FE 번들러 검증 예시(2026-06-18 실측). 모듈을 더하거나 빼려면 세 곳을 함께 고친다 — (1) folders 배열에 amaranth10-{모듈} 항목 추가/삭제 (2) 아래 launch.compounds 'BE 전체 기동'의 configurations 목록에 '{모듈} BE (로컬 develop 풀스택)' 추가/삭제 (3) 그 모듈 폴더 .vscode/launch.json의 config name이 (2)와 똑같은지 확인. (3)이 어긋나면 컴파운드가 그 BE를 못 띄운다(함정 ⑨ — 참조명 불일치).",
+
+  "folders": [
+    { "name": "amaranth10-crm", "path": "amaranth10-crm" },
+    { "name": "amaranth10-lte", "path": "amaranth10-lte" },
+    { "name": "amaranth10-ab", "path": "amaranth10-ab" },
+    { "name": "klago-ui-micro", "path": "klago-ui-micro" }
+  ],
+
+  "settings": {
+    "//boot-java": "멀티 BE 동시 기동 시 Spring Boot 확장 JMX 포트(10000) 충돌 차단(함정 ⑧). 폴더별 .vscode/settings.json에도 같은 키가 있으나, 워크스페이스(작업 영역) 레벨로 한 번 더 지정해 폴더 설정 누락에도 안전하게 한다. 변경 후 Reload Window(명령 팔레트 > Developer: Reload Window)로 적용.",
+    "boot-java.live-information.automatic-connection.on": false,
+    "java.configuration.updateBuildConfiguration": "automatic"
+  },
+
+  "launch": {
+    "//": "compounds.configurations는 각 BE 폴더 .vscode/launch.json의 config name과 글자까지 정확히 일치해야 한다(함정 ⑨). 자바 임포트가 끝난 뒤 F5할 것. stopAll=true면 한 BE를 멈추면 컴파운드 전체가 함께 멈춘다.",
+    "version": "0.2.0",
+    "compounds": [
+      {
+        "name": "BE 전체 기동 (CRM + LTE + AB)",
+        "configurations": [
+          "crm BE (로컬 develop 풀스택)",
+          "lte BE (로컬 develop 풀스택)",
+          "ab BE (로컬 develop 풀스택)"
+        ],
+        "stopAll": true
+      }
+    ]
+  },
+
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "//": "BE는 위 compounds로 F5, FE 포털은 이 Run Task로 따로 띄운다(BE와 별개 프로세스). Reload Window가 FE 터미널(yarn start)을 종료시키므로, JMX 설정 적용 등으로 리로드한 뒤엔 이 태스크로 FE를 재시작한다.",
+        "label": "FE 포털 기동 (yarn start :3000)",
+        "type": "shell",
+        "command": "source \"$HOME/.nvm/nvm.sh\" && nvm use 16 && yarn start",
+        "options": { "cwd": "${workspaceFolder:klago-ui-micro}" },
+        "problemMatcher": []
+      }
+    ]
+  }
+}

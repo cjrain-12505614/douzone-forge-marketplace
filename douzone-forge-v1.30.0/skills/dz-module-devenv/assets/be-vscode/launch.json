@@ -1,0 +1,19 @@
+{
+  "//": "dz-module-devenv BE 실행 템플릿 — 치환: {{MAIN_CLASS}}(메인 클래스 FQN, 모듈마다 다름 — CRM=klago.CrmApplication, 연락처(AB)=co.duzon.AddressBookApplication), {{MODULE}}(모듈 코드, 예: crm/lte/ab). config name은 '{{MODULE}} BE …'로 예측 가능하게 — 멀티모듈 code-workspace 컴파운드가 이 이름으로 참조한다(함정 ⑨).",
+  "//projectName": "projectName을 의도적으로 비웠다(함정 ⑦). 멀티루트(여러 BE 폴더를 함께 열어 동시 F5)에서 자바 언어서버는 프로젝트를 '{settings.gradle의 rootProject.name}-{폴더명}' 합성명(예: crm-amaranth10-crm)으로 등록한다 → 폴더명(amaranth10-crm)·단순 gradle명(crm) 어느 쪽을 지정해도 'ConfigError: not a valid java project'로 실패. mainClass가 워크스페이스 내 유일하면 projectName 없이도 단일·멀티 모두 해소되므로 비우는 것이 가장 안전한 기본값. 굳이 명시해야 하면 실측 등록명을 redhat.java jdt_ws 워크스페이스 스토리지(.metadata/.plugins/org.eclipse.core.resources/.projects/)에서 확인해 합성명을 지정한다.",
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "{{MODULE}} BE (로컬 develop 풀스택)",
+      "request": "launch",
+      "mainClass": "{{MAIN_CLASS}}",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "vmArgs": "-Dfile.encoding=UTF-8",
+      "env": {
+        "Amaranth10_JSPT": "localdev-no-enc"
+      }
+    }
+  ]
+}
