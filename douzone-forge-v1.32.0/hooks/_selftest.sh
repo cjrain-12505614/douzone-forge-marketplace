@@ -54,7 +54,7 @@ check() { # $1=이름 $2=기대 문자열 $3=실제 출력
 
 # 격리 전제 검증 — 격리가 안 먹으면(GIT_CONFIG_GLOBAL 은 git 2.32+) 아래 시험이 계측으로 새거나
 # 기기마다 갈린다. 조용히 통과시키지 않고 여기서 드러낸다.
-echo "[0/10] git 설정 격리 — 시험 저장소가 PC 의 git 설정을 읽지 않는가 (v1.29.2)"
+echo "[0/11] git 설정 격리 — 시험 저장소가 PC 의 git 설정을 읽지 않는가 (v1.29.2)"
 ISO_PROBE="$TMP/iso-probe.git"
 git init -q --bare "$ISO_PROBE" >/dev/null 2>&1
 if [ -z "$(git -C "$ISO_PROBE" config --get core.hooksPath 2>/dev/null)" ]; then
@@ -68,7 +68,7 @@ else
   echo "  FAIL  격리(새 저장소 기본 분기: $(cat "$ISO_PROBE/HEAD" 2>/dev/null) — 기기마다 결과가 갈릴 수 있음)"; FAIL=$((FAIL+1))
 fi
 
-echo "[1/10] link-integrity-check — 깨진 링크 md 에서 경고가 나오는가"
+echo "[1/11] link-integrity-check — 깨진 링크 md 에서 경고가 나오는가"
 BROKEN_MD="$TMP/broken.md"
 printf '[존재하지 않는 파일](./no-such-file-xyz.md)\n' > "$BROKEN_MD"
 OUT="$(json Write "$BROKEN_MD" | bash "$HERE/link-integrity-check.sh" 2>&1 || true)"
@@ -76,7 +76,7 @@ check "link-integrity-check(발동)" "깨진 링크" "$OUT"
 OUT2="$(json Write "$TMP/ok.txt" | bash "$HERE/link-integrity-check.sh" 2>&1 || true)"
 [ -z "$OUT2" ] && { echo "  PASS  link-integrity-check(비대상 무음)"; PASS=$((PASS+1)); } || { echo "  FAIL  link-integrity-check(비대상인데 출력)"; FAIL=$((FAIL+1)); }
 
-echo "[2/10] code-quality-reminder — 게이트 켜짐 + 확장자별 체크리스트가 나오는가"
+echo "[2/11] code-quality-reminder — 게이트 켜짐 + 확장자별 체크리스트가 나오는가"
 OUT="$(json Edit "$TMP/Sample.java" | FORGE_DEV_HOOKS=1 bash "$HERE/code-quality-reminder.sh" 2>&1 || true)"
 check "code-quality-reminder(.java 발동)" "코드 품질" "$OUT"
 # v1.20.0 퍼블리싱 계열 확대 — 코드 계열(.js)과 마크업·스타일 계열(.scss)이 각각 맞는 체크리스트를 내는가
@@ -92,11 +92,11 @@ OUT2="$(json Edit "$TMP/note.md" | FORGE_DEV_HOOKS=1 bash "$HERE/code-quality-re
 OUT2="$(json Edit "$TMP/Sample.java" | FORGE_DEV_HOOKS=0 bash "$HERE/code-quality-reminder.sh" 2>&1 || true)"
 [ -z "$OUT2" ] && { echo "  PASS  code-quality-reminder(게이트 꺼짐 무음)"; PASS=$((PASS+1)); } || { echo "  FAIL  code-quality-reminder(게이트 꺼짐인데 출력)"; FAIL=$((FAIL+1)); }
 
-echo "[3/10] security-auto-trigger — 보안 파일명에서 경고가 나오는가"
+echo "[3/11] security-auto-trigger — 보안 파일명에서 경고가 나오는가"
 OUT="$(json Edit "$TMP/AuthService.java" | FORGE_DEV_HOOKS=1 bash "$HERE/security-auto-trigger.sh" 2>&1 || true)"
 check "security-auto-trigger(발동)" "보안 민감" "$OUT"
 
-echo "[4/10] build-verify-reminder — 5회째 편집에서 리마인더가 나오는가"
+echo "[4/11] build-verify-reminder — 5회째 편집에서 리마인더가 나오는가"
 COUNTER="/tmp/.forge-edit-counter"
 SAVED=""; [ -f "$COUNTER" ] && SAVED="$(cat "$COUNTER")"
 echo 4 > "$COUNTER"
@@ -116,7 +116,7 @@ OUT2="$(json Edit "$TMP/note.md" | FORGE_DEV_HOOKS=1 bash "$HERE/build-verify-re
 if [ -n "$SAVED" ]; then echo "$SAVED" > "$COUNTER"; else rm -f "$COUNTER"; fi
 
 echo ""
-echo "[5/10] link-integrity-scan — 전수 스캔이 기준선·증가를 잡는가 (2026-08-13 신설)"
+echo "[5/11] link-integrity-scan — 전수 스캔이 기준선·증가를 잡는가 (2026-08-13 신설)"
 # 시험 대상은 「발동하는가」가 아니라 **「거짓 통과하지 않는가」**다.
 # 임시 저장소는 반드시 워크스페이스 밖에 만든다 — dz-sync 가 푸시해 버린다.
 SCANWS="$TMP/scanws"
@@ -158,7 +158,7 @@ else
 fi
 
 echo ""
-echo "[6/10] dz-gitlab-sync 대량 되돌림 가드 — 자산화를 지우는 커밋을 막는가 (v1.27.0)"
+echo "[6/11] dz-gitlab-sync 대량 되돌림 가드 — 자산화를 지우는 커밋을 막는가 (v1.27.0)"
 # 배경(실사고 2026-08-27): 중간에 죽은 `git pull` 이 작업트리만 원격판으로 덮어, 내 자산화를
 #   지우는 커밋이 대기 상태로 놓였다. 20시간 동안 어느 화면에도 뜨지 않았다.
 GT="$TMP/guard"; mkdir -p "$GT"
@@ -231,7 +231,7 @@ else
   echo "  FAIL  대량되돌림가드(우회해도 안 됨)"; FAIL=$((FAIL+1))
 fi
 
-echo "[7/10] dz-gitlab-sync 연속 실패 환기 — 3회째에 방치를 알리는가 (v1.28.0)"
+echo "[7/11] dz-gitlab-sync 연속 실패 환기 — 3회째에 방치를 알리는가 (v1.28.0)"
 # 배경(실사고 2026-09-07): 같은 파일 끝을 무인 모니터 루틴과 대화형 세션이 각각 이어 붙여
 #   10:24~16:22 약 6시간, 18회 연속 같은 지점에서 멈췄다. 충돌 자체보다 「아무도 몰랐다」가 피해였다.
 ST="$TMP/streak"; mkdir -p "$ST"
@@ -314,7 +314,7 @@ else
 fi
 
 echo ""
-echo "[8/10] dz-gitlab-sync 계측 누수 자가 감지 — 훅 대행·놓친 커밋·고착 안내 (v1.28.1)"
+echo "[8/11] dz-gitlab-sync 계측 누수 자가 감지 — 훅 대행·놓친 커밋·고착 안내 (v1.28.1)"
 # 배경(2026-09-08): forge 는 core.hooksPath 로 훅 경로를 독점하므로 Litmus(사내 AI 계측) 전역 훅이
 #   통째로 무시되고, forge 가 대신 불러 준다. 그 대행이 4종 중 3종뿐이었고(post-merge 누락)
 #   **대조하는 장치가 없어 3개월 넘게 조용히 새어 나갔다.** 이 절이 그 대조를 회귀로 고정한다.
@@ -427,7 +427,7 @@ if [ "$(find "$LK/lock2/.git" -name '*.lock' | wc -l | tr -d ' ')" = "1" ]; then
 else echo "  FAIL  고착중잠금청소(신선한 잠금을 지움)"; FAIL=$((FAIL+1)); fi
 
 echo ""
-echo "[9/10] dz-gitlab-sync A등급 고착 자동 복구 — 껍데기만 치우고 위험한 것은 손대지 않는가 (v1.29.0)"
+echo "[9/11] dz-gitlab-sync A등급 고착 자동 복구 — 껍데기만 치우고 위험한 것은 손대지 않는가 (v1.29.0)"
 # 배경(2026-09-08 차민수 수석 지적): 「알리기만」이 실패했다 — 22일·17시간 30분·15시간 30분 방치.
 #   증상 인원이 기획·설계 직군이라 복구 절차(--quit → switch)를 밟기 어렵다.
 # ⛔ 그러나 2026-08-27 사고에서 잔해는 **고장이면서 동시에 안전장치**였다. 그래서 껍데기만 치운다.
@@ -525,7 +525,7 @@ else
 fi
 
 echo ""
-echo "[10/10] dz-gitlab-sync 고착 안내 — 「원격에 아직 없는 내 커밋」을 제대로 세는가 (v1.29.1)"
+echo "[10/11] dz-gitlab-sync 고착 안내 — 「원격에 아직 없는 내 커밋」을 제대로 세는가 (v1.29.1)"
 # 배경(실사고 2026-09-11 맥미니B): 리베이스가 멈추면 HEAD 는 원격 커밋(onto) 위에 앉고 내 커밋은
 #   orig-head 쪽에만 있다. 종전에는 origin..HEAD 로 세서 **늘 0** 이 나왔다 — 원격에 없는 97줄이
 #   43시간 매달려 있는데 훅은 「미푸시 0건」이라 알렸다. 이 절이 그 사각을 회귀로 막는다.
@@ -576,6 +576,75 @@ check "원격미반영(충돌 정지 3건·이중계산 없음)" "원격에 아�
 if printf '%s' "$O" | grep -q "미푸시"; then
   echo "  FAIL  원격미반영(옛 문구 「미푸시」 잔존)"; FAIL=$((FAIL+1))
 else echo "  PASS  원격미반영(옛 문구 「미푸시」 제거)"; PASS=$((PASS+1)); fi
+
+echo ""
+echo "[11/11] feedback-review-moment — 채팅으로 여러 선택을 물을 때만 되돌려 보내고, 그 밖에는 조용히 통과하는가 (2026-10-01 신설)"
+# 배경: 질문 페이지 4회차 결정(R4-1 ③ 「그 순간에만 알림」) — 매 입력 안내 대신 응답 종료(Stop) 시점에
+#   답변 글을 보고 「고르라는 질문」이 채팅에 늘어놓였을 때만 {"decision":"block"} 로 되돌려 보낸다.
+#   글 모양 판정이라 놓침·오탐이 함께 위험하다 — 걸려야 할 것·걸리면 안 될 것·항상 통과해야 할 것을 함께 단언한다.
+FRM="$TMP/frm"; mkdir -p "$FRM/ws/규칙/프로세스"
+# forge 워크스페이스 흉내 — 안내 파일이 있어야 동작한다(v1.32.0 부터 없는 폴더는 조용히 통과)
+printf '[질문 페이지 환기] 시험용 동기화 문구 FRM-7f3a\n' > "$FRM/ws/규칙/프로세스/질문페이지-환기.md"
+frm_tr() {  # $1 = 답변 글 → 기록 파일 경로 출력(사용자 입력 → 중간 도구 호출 → 마지막 답변)
+  python3 -B - "$FRM/t$RANDOM.jsonl" "$1" <<'PY'
+import json, sys
+p, reply = sys.argv[1], sys.argv[2]
+rows = [
+  {"type": "user", "message": {"role": "user", "content": "질문"}},
+  {"type": "assistant", "message": {"role": "assistant", "content": [{"type": "text", "text": "확인합니다"}, {"type": "tool_use", "id": "x", "name": "Bash", "input": {}}]}},
+  {"type": "user", "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "x", "content": "ok"}]}},
+  {"type": "assistant", "message": {"role": "assistant", "content": [{"type": "text", "text": reply}]}},
+]
+with open(p, "w", encoding="utf-8") as f:
+    for r in rows: f.write(json.dumps(r, ensure_ascii=False) + "\n")
+print(p)
+PY
+}
+frm_run() {  # $1 = 기록 경로, $2 = stop_hook_active(true/false), $3 = CLAUDE_PROJECT_DIR
+  printf '{"transcript_path":"%s","stop_hook_active":%s}' "$1" "$2" | CLAUDE_PROJECT_DIR="$3" bash "$HERE/feedback-review-moment.sh" 2>&1; echo "exit=$?"
+}
+frm_expect() {  # $1 이름 · $2 block|pass · $3 답변 글 · [$4 active]
+  local tr out; tr="$(frm_tr "$3")"; out="$(frm_run "$tr" "${4:-false}" "$FRM/ws")"
+  if [ "$2" = block ]; then
+    if printf '%s' "$out" | grep -q '"decision": "block"' && printf '%s' "$out" | grep -q "exit=0"; then echo "  PASS  질문페이지순간($1 → 되돌려 보냄)"; PASS=$((PASS+1))
+    else echo "  FAIL  질문페이지순간($1 — 되돌려 보내야 하는데 통과)"; FAIL=$((FAIL+1)); fi
+  else
+    if [ "$out" = "exit=0" ]; then echo "  PASS  질문페이지순간($1 → 조용히 통과)"; PASS=$((PASS+1))
+    else echo "  FAIL  질문페이지순간($1 — 통과해야 하는데 출력: $(printf '%s' "$out" | head -c 80))"; FAIL=$((FAIL+1)); fi
+  fi
+}
+# ⓐ 걸려야 할 것 — 물음표 없는 선택 요청(한국어 요청은 물음표 없이 끝나는 경우가 많다), 표로 된 선택지, 질문 2개
+frm_expect "번호 목록 + 고르시면" block $'방안이 셋입니다.\n1. A안 — 빠름\n2. B안 — 안전\n3. C안 — 저렴\n1번을 고르시면 바로 진행합니다.'
+frm_expect "표 선택지 + 어느 쪽" block $'| 방식 | 결과 |\n|---|---|\n| ① 빠르게 | 위험 |\n| ② 천천히 | 안전 |\n어느 쪽으로 할지 정해 주세요.'
+frm_expect "질문 2개 + 요청어 2번" block '두 가지를 정해 주세요. 배포를 오늘 할까요? 범위도 결정해 주시겠어요?'
+# ⓑ 걸리면 안 될 것 — 예·아니오 하나, 요청 없는 보고 목록, 질문 페이지 안내, 코드 블록 안 번호
+frm_expect "예·아니오 하나" pass '이대로 배포할까요?'
+frm_expect "요청 없는 보고 목록" pass $'완료했습니다.\n1. 틀 제작\n2. 도구 제작\n3. 시험 통과'
+frm_expect "질문 페이지 안내" pass $'질문 페이지를 띄웠습니다.\n① A\n② B\n고르신 뒤 「답변 완료」를 눌러 주세요. 어느 쪽이든 괜찮습니다.'
+frm_expect "코드 블록 안 선택지" pass $'예시입니다.\n```\n1. 고르시면\n2. 어느 쪽\n```\n끝났습니다.'
+# ⓒ 항상 통과 — 같은 응답의 두 번째 검사(무한 되돌림 방지) · 잘못된 입력 · 없는 기록 경로
+frm_expect "같은 응답 두 번째(stop_hook_active)" pass $'방안이 둘입니다.\n1. A\n2. B\n1번을 고르시면 됩니다.' true
+OUT="$(printf '이건 JSON 아님' | CLAUDE_PROJECT_DIR="$FRM/ws" bash "$HERE/feedback-review-moment.sh" 2>&1; echo "exit=$?")"
+[ "$OUT" = "exit=0" ] && { echo "  PASS  질문페이지순간(잘못된 입력 → 통과)"; PASS=$((PASS+1)); } || { echo "  FAIL  질문페이지순간(잘못된 입력에 출력)"; FAIL=$((FAIL+1)); }
+OUT="$(printf '{"transcript_path":"/없는/경로.jsonl"}' | CLAUDE_PROJECT_DIR="$FRM/ws" bash "$HERE/feedback-review-moment.sh" 2>&1; echo "exit=$?")"
+[ "$OUT" = "exit=0" ] && { echo "  PASS  질문페이지순간(없는 기록 경로 → 통과)"; PASS=$((PASS+1)); } || { echo "  FAIL  질문페이지순간(없는 기록 경로에 출력)"; FAIL=$((FAIL+1)); }
+# ⓓ 동기화 문구 — 워크스페이스 규칙/프로세스/질문페이지-환기.md 내용을 이유 끝에 붙인다
+OUT="$(frm_run "$(frm_tr $'방안이 둘입니다.\n1. A\n2. B\n1번을 고르시면 됩니다.')" false "$FRM/ws")"
+check "질문페이지순간(동기화 문구를 이유에 붙임)" "FRM-7f3a" "$OUT"
+# ⓕ forge 밖 폴더 — 안내 파일이 없으면 선택 질문이어도 조용히 통과(다른 프로젝트를 막지 않는다, v1.32.0)
+OUT="$(frm_run "$(frm_tr $'방안이 둘입니다.\n1. A\n2. B\n1번을 고르시면 됩니다.')" false "$TMP/frm-없음")"
+[ "$OUT" = "exit=0" ] && { echo "  PASS  질문페이지순간(forge 밖 폴더 → 통과)"; PASS=$((PASS+1)); } || { echo "  FAIL  질문페이지순간(forge 밖 폴더에서 되돌려 보냄: $(printf '%s' "$OUT" | head -c 80))"; FAIL=$((FAIL+1)); }
+# ⓔ 배선 — hooks.json 의 Stop 에 걸려 있고, 옛 매 입력 배선(feedback-review-remind)은 없어야 한다
+if python3 -B - "$HERE/hooks.json" <<'PY' 2>/dev/null
+import json, sys
+d = json.load(open(sys.argv[1], encoding="utf-8"))
+stop = [h.get("command", "") for g in d["hooks"].get("Stop", []) for h in g.get("hooks", [])]
+ups = [h.get("command", "") for g in d["hooks"].get("UserPromptSubmit", []) for h in g.get("hooks", [])]
+ok = any(c.endswith("/hooks/feedback-review-moment.sh") for c in stop) and not any("feedback-review-remind" in c for c in ups)
+sys.exit(0 if ok else 1)
+PY
+then echo "  PASS  질문페이지순간(Stop 배선 · 옛 매 입력 배선 없음)"; PASS=$((PASS+1))
+else echo "  FAIL  질문페이지순간(hooks.json Stop 배선 없음 또는 옛 매 입력 배선 남음)"; FAIL=$((FAIL+1)); fi
 
 echo ""
 echo "결과: PASS $PASS · FAIL $FAIL"
