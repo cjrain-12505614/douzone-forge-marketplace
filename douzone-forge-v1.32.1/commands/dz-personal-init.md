@@ -418,7 +418,7 @@ print("✅ douzone-forge-marketplace autoUpdate 활성:", p)
 PYEOF
 ```
 
-- 이 설정 후부터 플러그인 신버전은 **자동 적용**(다음 시작 시). 새 훅·MCP 즉시 반영이 필요하면 `/reload-plugins`.
+- 이 설정 후부터 플러그인 신버전은 **Claude Code 가 시작할 때** 자동으로 받는다. 배포 직후 바로 받으려면 `/dz-plugin-update`(앱 플러그인 화면의 「업데이트」 버튼은 그 PC가 마켓을 다시 확인해야 켜져 시점을 알 수 없다 — 2026-10-01). 받은 뒤 데스크톱 앱은 열린 세션에 스스로 다시 불러오고, 명령줄 터미널 세션은 `/reload-plugins`.
 - ⚠️ 부트스트랩: 이 단계(8.6) 자체가 v1.4.2에 포함되므로, **각 직원은 딱 한 번 수동 업데이트**(`/plugin marketplace update douzone-forge-marketplace` → `/reload-plugins`) 후 dz-personal-init 재실행하면, 이후로는 전부 자동.
 
 ### 9. 환경 자가 진단 요약 (v0.7.0 — 멱등 점검 체크리스트)

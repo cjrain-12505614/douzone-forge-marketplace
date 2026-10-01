@@ -1,6 +1,6 @@
 # 훅 인벤토리·분류표 (HOOKS.md)
 
-> douzone-forge 플러그인 훅 23개의 트리거·배선·성격·게이트 분류. 표준: `규칙/프로세스/플러그인-자체-개발표준.md`(forge) §6·§9. 갱신: 2026-10-01(feedback-review-moment 신설 — 같은 날 만든 매 입력 안내 feedback-review-remind 를 대체) · 2026-08-13 실측(link-integrity-scan 신설).
+> douzone-forge 플러그인 훅 23개(고유 스크립트 — `hooks.json` 배선 항목은 26: `dz-gitlab-sync.sh` 하나가 네 이벤트에 걸림, v1.32.0 실측)의 트리거·배선·성격·게이트 분류. 표준: `규칙/프로세스/플러그인-자체-개발표준.md`(forge) §6·§9. 갱신: 2026-10-01(feedback-review-moment 신설 — 같은 날 만든 매 입력 안내 feedback-review-remind 를 대체) · 2026-08-13 실측(link-integrity-scan 신설).
 >
 > 용어: 배선(plugin.json에 등록되어 실제 작동) · 고아(orphan, 미배선) · 차단(exit 2 — 작업을 막음) · 권고(exit 0 + stderr 경고) · 게이트(`_forge-gate.sh` — 브리지/env에서만 작동) · 헬퍼(다른 훅이 source로 불러 쓰는 보조)
 
@@ -26,7 +26,7 @@
 | `dz-gitlab-sync.sh` | SessionStart·SessionEnd·UserPromptSubmit·Stop | **동작(원격 동기화)** — 읽기전용 예외 | ✗ | ✓ |
 | `force-rules-inject.sh` | UserPromptSubmit | **주입(매 턴 강제원칙 4대)** — `규칙/프로세스/강제규칙-주입.md` 출력, `.claude/` 폴백 | ✗ | ✓ |
 | `progress-dashboard-remind.sh` | UserPromptSubmit | **주입(매 턴 대시보드 발동 환기 1줄)** — 기본 문구 내장, `규칙/프로세스/진행대시보드-환기.md` 존재 시 우선 | ✗ | ✓ | (v1.13.0 신설) |
-| `feedback-review-moment.sh` | Stop | **순간 알림(응답 종료 시 답변 검사)** — 답변이 채팅으로 여러 선택을 묻고 있을 때만(선택을 뜻하는 말 + 줄 맨 앞 선택지 2개 이상, 또는 물음표 질문 2개 + 요청어 2번) `{"decision":"block"}` 로 되돌려 dz-feedback-review 질문 페이지로 다시 묻게 함. 질문 페이지 안내 답변·`stop_hook_active`·python3 없음·오류는 통과. 이유 끝에 `규칙/프로세스/질문페이지-환기.md` 내용(없으면 내장 문구) | ✗ | ✓ | (v1.31.0 신설 · `_selftest.sh` [11/11]) |
+| `feedback-review-moment.sh` | Stop | **순간 알림(응답 종료 시 답변 검사)** — 답변이 채팅으로 여러 선택을 묻고 있을 때만(선택을 뜻하는 말 + 줄 맨 앞 선택지 2개 이상, 또는 물음표 질문 2개 + 요청어 2번) `{"decision":"block"}` 로 되돌려 dz-feedback-review 질문 페이지로 다시 묻게 함. forge 밖 폴더(`규칙/프로세스/질문페이지-환기.md` 없음 — v1.32.0)·질문 페이지 안내 답변·`stop_hook_active`·python3 없음·오류는 통과. 이유 끝에 그 안내 파일 내용 | ✗ | ✓ | (v1.31.0 신설 · `_selftest.sh` [11/11]) |
 | `simple-approval-md-block.sh` | PreToolUse(Write/Edit) | 권고 — 검토의견/검토결과 .md 단순 결재 경고 | ✗ | — | (v1.12.0 배선) |
 | `umbrella-vocab-block.sh` | PreToolUse(Write/Edit) | 권고 — "우산 X" → "마스터 X" 어휘 | ✗ | — | (v1.12.0 배선) |
 | `memory-rule-content-block.sh` | PreToolUse(Write) | **차단(exit 2)** — 메모리 룰성 본문(화이트리스트 통과) | ✗ | — | (v1.12.0 배선) |

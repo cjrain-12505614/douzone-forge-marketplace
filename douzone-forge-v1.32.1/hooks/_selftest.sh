@@ -583,6 +583,8 @@ echo "[11/11] feedback-review-moment — 채팅으로 여러 선택을 물을 �
 #   답변 글을 보고 「고르라는 질문」이 채팅에 늘어놓였을 때만 {"decision":"block"} 로 되돌려 보낸다.
 #   글 모양 판정이라 놓침·오탐이 함께 위험하다 — 걸려야 할 것·걸리면 안 될 것·항상 통과해야 할 것을 함께 단언한다.
 FRM="$TMP/frm"; mkdir -p "$FRM/ws/규칙/프로세스"
+# forge 워크스페이스 흉내 — 안내 파일이 있어야 동작한다(v1.32.0 부터 없는 폴더는 조용히 통과)
+printf '[질문 페이지 환기] 시험용 동기화 문구 FRM-7f3a\n' > "$FRM/ws/규칙/프로세스/질문페이지-환기.md"
 frm_tr() {  # $1 = 답변 글 → 기록 파일 경로 출력(사용자 입력 → 중간 도구 호출 → 마지막 답변)
   python3 -B - "$FRM/t$RANDOM.jsonl" "$1" <<'PY'
 import json, sys
@@ -602,7 +604,7 @@ frm_run() {  # $1 = 기록 경로, $2 = stop_hook_active(true/false), $3 = CLAUD
   printf '{"transcript_path":"%s","stop_hook_active":%s}' "$1" "$2" | CLAUDE_PROJECT_DIR="$3" bash "$HERE/feedback-review-moment.sh" 2>&1; echo "exit=$?"
 }
 frm_expect() {  # $1 이름 · $2 block|pass · $3 답변 글 · [$4 active]
-  local tr out; tr="$(frm_tr "$3")"; out="$(frm_run "$tr" "${4:-false}" "$TMP/frm-없음")"
+  local tr out; tr="$(frm_tr "$3")"; out="$(frm_run "$tr" "${4:-false}" "$FRM/ws")"
   if [ "$2" = block ]; then
     if printf '%s' "$out" | grep -q '"decision": "block"' && printf '%s' "$out" | grep -q "exit=0"; then echo "  PASS  질문페이지순간($1 → 되돌려 보냄)"; PASS=$((PASS+1))
     else echo "  FAIL  질문페이지순간($1 — 되돌려 보내야 하는데 통과)"; FAIL=$((FAIL+1)); fi
@@ -622,14 +624,16 @@ frm_expect "질문 페이지 안내" pass $'질문 페이지를 띄웠습니다.
 frm_expect "코드 블록 안 선택지" pass $'예시입니다.\n```\n1. 고르시면\n2. 어느 쪽\n```\n끝났습니다.'
 # ⓒ 항상 통과 — 같은 응답의 두 번째 검사(무한 되돌림 방지) · 잘못된 입력 · 없는 기록 경로
 frm_expect "같은 응답 두 번째(stop_hook_active)" pass $'방안이 둘입니다.\n1. A\n2. B\n1번을 고르시면 됩니다.' true
-OUT="$(printf '이건 JSON 아님' | bash "$HERE/feedback-review-moment.sh" 2>&1; echo "exit=$?")"
+OUT="$(printf '이건 JSON 아님' | CLAUDE_PROJECT_DIR="$FRM/ws" bash "$HERE/feedback-review-moment.sh" 2>&1; echo "exit=$?")"
 [ "$OUT" = "exit=0" ] && { echo "  PASS  질문페이지순간(잘못된 입력 → 통과)"; PASS=$((PASS+1)); } || { echo "  FAIL  질문페이지순간(잘못된 입력에 출력)"; FAIL=$((FAIL+1)); }
-OUT="$(printf '{"transcript_path":"/없는/경로.jsonl"}' | bash "$HERE/feedback-review-moment.sh" 2>&1; echo "exit=$?")"
+OUT="$(printf '{"transcript_path":"/없는/경로.jsonl"}' | CLAUDE_PROJECT_DIR="$FRM/ws" bash "$HERE/feedback-review-moment.sh" 2>&1; echo "exit=$?")"
 [ "$OUT" = "exit=0" ] && { echo "  PASS  질문페이지순간(없는 기록 경로 → 통과)"; PASS=$((PASS+1)); } || { echo "  FAIL  질문페이지순간(없는 기록 경로에 출력)"; FAIL=$((FAIL+1)); }
-# ⓓ 동기화 문구 — 워크스페이스 규칙/프로세스/질문페이지-환기.md 가 있으면 그 내용을 이유 끝에 붙인다
-printf '[질문 페이지 환기] 시험용 동기화 문구 FRM-7f3a\n' > "$FRM/ws/규칙/프로세스/질문페이지-환기.md"
+# ⓓ 동기화 문구 — 워크스페이스 규칙/프로세스/질문페이지-환기.md 내용을 이유 끝에 붙인다
 OUT="$(frm_run "$(frm_tr $'방안이 둘입니다.\n1. A\n2. B\n1번을 고르시면 됩니다.')" false "$FRM/ws")"
 check "질문페이지순간(동기화 문구를 이유에 붙임)" "FRM-7f3a" "$OUT"
+# ⓕ forge 밖 폴더 — 안내 파일이 없으면 선택 질문이어도 조용히 통과(다른 프로젝트를 막지 않는다, v1.32.0)
+OUT="$(frm_run "$(frm_tr $'방안이 둘입니다.\n1. A\n2. B\n1번을 고르시면 됩니다.')" false "$TMP/frm-없음")"
+[ "$OUT" = "exit=0" ] && { echo "  PASS  질문페이지순간(forge 밖 폴더 → 통과)"; PASS=$((PASS+1)); } || { echo "  FAIL  질문페이지순간(forge 밖 폴더에서 되돌려 보냄: $(printf '%s' "$OUT" | head -c 80))"; FAIL=$((FAIL+1)); }
 # ⓔ 배선 — hooks.json 의 Stop 에 걸려 있고, 옛 매 입력 배선(feedback-review-remind)은 없어야 한다
 if python3 -B - "$HERE/hooks.json" <<'PY' 2>/dev/null
 import json, sys

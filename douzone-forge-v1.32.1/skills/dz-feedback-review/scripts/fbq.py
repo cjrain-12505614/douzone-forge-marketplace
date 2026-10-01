@@ -1325,11 +1325,19 @@ on run argv
   set TB to character id 9
   using terms from application "Google Chrome"
     tell application appName
-      repeat with w in windows
-        set wid to id of w
-        repeat with t in tabs of w
-          set out to out & wid & TB & (id of t) & TB & (URL of t) & linefeed
-        end repeat
+      -- 창·탭 id 는 20억이 넘을 수 있다(AppleScript 정수 한도 약 5억 3천만) — 숫자로 다루지 않고 글자로 내보낸다.
+      -- 도는 중에 탭이 닫히면 -1719(유효하지 않은 인덱스)가 나므로 창·탭마다 try 로 감싼다.
+      repeat with w in (every window)
+        try
+          set wid to (id of w) as text
+          set n to count of tabs of w
+          repeat with i from 1 to n
+            try
+              set t to tab i of w
+              set out to out & wid & TB & ((id of t) as text) & TB & (URL of t) & linefeed
+            end try
+          end repeat
+        end try
       end repeat
     end tell
   end using terms from
@@ -1341,25 +1349,34 @@ AS_SET = r'''
 on run argv
   set appName to item 1 of argv
   set newURL to item 2 of argv
-  set wid to (item 3 of argv) as integer
-  set tid to (item 4 of argv) as integer
+  -- id 는 글자로 비교한다 — 「as integer」 로 바꾸면 20억이 넘는 id 가 실수(2.0E+9)가 되어 같은 탭인데도 다르다고 나온다
+  -- (2026-10-01 실측: 맞는 탭을 못 찾았는데도 「OK」 를 돌려 「바꿨습니다」 거짓 보고)
+  set widText to item 3 of argv
+  set tidText to item 4 of argv
   using terms from application "Google Chrome"
     tell application appName
-      set w to window id wid
-      set i to 0
-      repeat with t in tabs of w
-        set i to i + 1
-        if (id of t) is tid then
-          set URL of t to newURL
-          set active tab index of w to i
-          exit repeat
-        end if
+      repeat with w in (every window)
+        try
+          if ((id of w) as text) is widText then
+            set n to count of tabs of w
+            repeat with i from 1 to n
+              try
+                set t to tab i of w
+                if ((id of t) as text) is tidText then
+                  set URL of t to newURL
+                  set active tab index of w to i
+                  set index of w to 1
+                  activate
+                  return "OK " & i
+                end if
+              end try
+            end repeat
+          end if
+        end try
       end repeat
-      set index of w to 1
-      activate
     end tell
   end using terms from
-  return "OK " & i
+  return "NOTFOUND"
 end run
 '''
 
@@ -1433,10 +1450,28 @@ def cmd_open(a):
             r = None
             why = "크롬 탭 주소를 바꾸지 못했습니다(30초 초과 — 화면에 자동화 권한 허용 창이 떠 있는지 확인)"
         if r is not None and r.returncode == 0 and r.stdout.strip().startswith("OK"):
-            say("같은 페이지 탭의 주소를 바꿨습니다(새 탭 없음): " + url)
-            return
-        if r is not None:
-            why = (r.stderr or "").strip()[:200]
+            # 응답만 믿지 않고 그 탭의 주소를 다시 읽어 확인한다(거짓 「바꿨습니다」 방지). 페이지가 넘어가는 동안은 탭을
+            # 읽지 못할 수 있어 0.5초 간격으로 최대 3초 다시 본다(2026-10-01 실측: 0.5초 뒤에는 못 읽고 1.5초 뒤에는 읽힘).
+            want = url.split("#", 1)[0]
+            seen = []
+            for _ in range(6):
+                time.sleep(0.5)
+                try:
+                    r2 = subprocess.run([osa, "-e", AS_LIST, a.app], capture_output=True, text=True, timeout=30)
+                except subprocess.TimeoutExpired:
+                    continue
+                seen = [ln.split("\t", 2)[2] for ln in (r2.stdout or "").splitlines()
+                        if len(ln.split("\t", 2)) == 3 and ln.split("\t", 2)[1].strip() == str(hit[1])]
+                if seen and seen[0].split("#", 1)[0] == want:
+                    say("같은 페이지 탭의 주소를 바꿨습니다(새 탭 없음 · 바뀐 주소 확인): " + url)
+                    return
+            if not seen:
+                # 탭을 끝내 읽지 못함 — 교체 응답(OK)은 맞는 탭을 찾았을 때만 오므로 새 탭을 또 열지 않는다(탭이 둘로 늘어나는 것 방지)
+                say("같은 페이지 탭의 주소를 바꿨습니다(새 탭 없음). 다만 바뀐 주소를 다시 읽어 확인하지는 못했습니다 — 탭을 확인해 주세요: " + url)
+                return
+            why = "탭 주소를 바꿨다는 응답은 왔지만 탭이 옛 주소 그대로입니다(지금 주소: %s)" % seen[0][:120]
+        elif r is not None:
+            why = ((r.stderr or "").strip() or "맞는 탭을 찾지 못했습니다(%s)" % (r.stdout or "").strip())[:200]
     if why:
         say("경고: 크롬 탭을 읽거나 바꾸지 못했습니다(자동화 권한 확인) — 새로 엽니다: " + why, err=True)
     r = subprocess.run(["open", "-a", a.app, url], capture_output=True, text=True)
