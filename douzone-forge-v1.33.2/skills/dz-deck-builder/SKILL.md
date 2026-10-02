@@ -1,6 +1,6 @@
 ---
 name: dz-deck-builder
-version: 0.1.0
+version: 0.2.2
 description: HTML 발표자료 또는 본문 구조를 편집 가능한 PowerPoint(.pptx)로 만드는 스킬. 배경 광선·그라데이션 칩만 이미지로 두고 텍스트·표·카드·도형은 PowerPoint 네이티브로 생성해 발표자 자유 편집 가능. pptxgenjs 함정(불릿 [object Object] 깨짐·배경 의사요소 높이 초과·다크 저대비·옵션 객체 재사용) 자동 회피 + 좌표 변환(px/96=inch, pt=px*0.75) + 더존 폰트 매칭 + 시각 QA 서브에이전트. 사용자가 "PPTX 만들어줘"·"발표자료 파워포인트로"·"편집 가능한 ppt"·"deck 만들어줘"·"발표 슬라이드 pptx"·"이 HTML을 ppt로" 등 트리거 시 본 스킬 활성.
 ---
 
@@ -26,9 +26,32 @@ description: HTML 발표자료 또는 본문 구조를 편집 가능한 PowerPoi
 npm install -g pptxgenjs          # PPTX 생성 (NODE_PATH=$(npm root -g))
 pip3 install Pillow numpy         # 배경 이미지
 # PDF 변환·시각 QA: LibreOffice(soffice) + pdftoppm
+# 시각 QA(Step 6) 전제 — 셋 중 하나라도 없으면 「시각 QA 못 함」으로 보고한다(2026-10-02 실측: 이 맥에는 셋 다 없었다)
+#   LibreOffice: soffice 실행 파일이 PATH 에 있어야 함 (예: brew install --cask libreoffice)
+#   poppler: pdftoppm (예: brew install poppler)
+#   Python 3.10 이상: pptx 스킬 변환기 soffice.py 가 TemporaryDirectory(ignore_cleanup_errors=…) 를 써서 3.9 에서는 TypeError
+#   대안(맥): LibreOffice 가 없으면 Keynote 로 PDF 를 뽑는다 — 앱 샌드박스 때문에 /tmp 의 파일은 열지 못하니 홈 아래 폴더에 두고
+#     open -a Keynote 발표자료.pptx  →  osascript -e 'tell application "Keynote" to export front document to (POSIX file "<홈 아래 경로>/발표자료.pdf") as PDF'
+#     (2026-10-02 실측. 이 PC 에 DOUZONE 서체가 없으면 대체 서체로 그려지니 서체 판정에는 쓰지 않는다)
 ```
 
 ## 표준 실행 흐름
+
+### Step 0. 설계안 — 브랜드가 정한 것과 이번에 정할 것을 나눈다
+
+미학 근거는 `dz-frontend-design`(Anthropic frontend-design 원문 동봉 + 더존 보강)이다. 다만 EQT 다크는 사내 브랜드 템플릿이라 아래 요소는 원본의 「피할 기본값」에 겹쳐도 **그대로 쓴다.** 근거는 EQT 발표 원본(`EQT 발표 5_4_v1.0.pdf`, 2026-05)을 2026-10-02에 쪽별로 대조한 결과다.
+
+| 브랜드 고정 요소 (그대로) | 이번 발표에서 정할 요소 |
+|---|---|
+| 미드나잇 네이비 바탕·블루·퍼플, 122° 대각선 광선, DOUZONE Title·Text | 장 종류별 배치(ASCII 와이어프레임으로 비교) |
+| 헤더띠 「브랜드 \| 장 제목」, 표지 Confidential 문구 | 장마다 실제로 강조할 한 곳 |
+| 가운데 흰 제목 + 핵심 구절만 블루·퍼플 + 아래 설명 문장 | 카드로 묶을 것과 그냥 놓을 것 |
+| 카드 안 영문 대문자 소제목(INPUT 등), 단계 카드의 그라데이션 머리, 하단 캡슐 강조바 | 장 제목 문장(결론 한 문장), 마지막 장(결정 요청·다음 행동) |
+
+- 카드 안 영문 소제목(INPUT 등)은 `lab()` 이 대문자로 바꾸지 않으므로 처음부터 대문자로 적는다(0.2.2 — 자동 변환이 Gartner·Amaranth 10 같은 고유명사를 깨뜨렸다).
+- 가운데 제목 **위** 라벨은 브랜드에 없다. `centerTitle` 의 eyebrow는 헤더띠에 없는 정보가 있을 때만 글자를 넘기고, 아니면 `null` 을 넘긴다(두 번째 자리 인자라 생략할 수 없다).
+- 쪽 번호 근거와 둥근 카드·번호 원·지표 칸 보충은 워크스페이스 `발표자료-PPTX-작성-표준.md` §0에 있다. 한쪽 표를 고치면 다른 쪽도 함께 고친다.
+- 설계안은 작업 세션 폴더에 남기고, 빌드 뒤 스크린샷으로 `dz-frontend-design` §8 점검을 한다.
 
 ### Step 1. 좌표·단위 변환 (HTML 1280×720 → PPTX)
 - 슬라이드: 커스텀 레이아웃 13.333 × 7.5 인치
@@ -38,7 +61,7 @@ pip3 install Pillow numpy         # 배경 이미지
 `templates/gen_bg.py` 실행 → `bg_body.png`(본문)·`bg_cover.png`(표지)·`grad_h.png`(가로 그라데이션 칩). 베이스 #0C0E1A + 122° 대각선 가우시안 밴드 + 좌하단 글로우.
 
 ### Step 3. 빌드 스크립트 작성
-`templates/build.js`를 복사해 **SLIDE 블록의 본문 데이터만 교체**한다. 헬퍼(`header`·`footer`·`centerTitle`·`card`·`chipCard`·`lab`·`embar`·`tbl`·`r`)를 재사용한다.
+`templates/build.js`를 복사해 **Step 0 설계안에 맞춰 SLIDE 블록을 고친다**(예시 13장의 배치를 그대로 쓰라는 뜻이 아니다). 헬퍼(`header`·`footer`·`centerTitle`·`card`·`chipCard`·`lab`·`embar`·`tbl`·`r`)를 재사용한다.
 
 ### Step 4. ⚠️ 함정 7건 (C1~C7) — 반드시 회피
 
@@ -46,7 +69,7 @@ pip3 install Pillow numpy         # 배경 이미지
 |---|------|------|
 | C1 | 배경 장식 의사요소가 슬라이드 높이 초과 | 장식은 슬라이드 범위(0~100%) 안에 가둠. PPTX는 배경 이미지라 무관하나 HTML 정합 시 주의 |
 | C2 | 불릿 한 줄에 여러 색 → `[object Object]` 깨짐 | run 단위로 펼침: 첫 run `bullet:{indent:16}`, 끝 run `breakLine:true`. 배열을 한 run의 text 자리에 넣지 말 것 |
-| C3 | 다크 배경 저대비 텍스트 | 본문 `#C2C8D6` 이상, 보조 `#9AA2B6` 이상 (`#767E94` dim은 캡션만) |
+| C3 | 다크 배경 저대비 텍스트 | 본문 `#C2C8D6` 이상, 보조 `#9AA2B6` 이상. `#767E94` dim은 광선 밖 바탕(헤더띠·오른쪽 위) 캡션만. footer 캡션은 `#C2C8D6`, 표지 아래쪽 글자는 흰색(면별 대비표: 표준 §3 C3) |
 | C4 | 그라데이션 표현 | 배경·칩만 이미지, 나머지 네이티브 |
 | C5 | 좌표·폰트 단위 혼동 | inch=px/96, pt=px*0.75 (Step 1) |
 | C6 | 옵션 객체 재사용 | 그림자 등 매번 새 객체 `const mk=()=>({...})` |
@@ -79,11 +102,11 @@ unzip -o -q 발표자료.pptx -d _check && grep -rl "object Object\|undefined\|N
 
 | 파일 | 용도 |
 |---|---|
-| `templates/build.js` | 검증된 13장 빌드 정본 (KISS 시장조사 발표자료, 함정 C1~C7 회피 적용) — SLIDE 본문만 교체 |
+| `templates/build.js` | 검증된 13장 빌드 예시 (KISS 시장조사 발표자료, 함정 C1~C7 회피 적용) — 헬퍼는 재사용하고 SLIDE 블록은 Step 0 설계안에 맞춰 고친다 |
 | `templates/gen_bg.py` | 더존 EQT 다크 배경 3종 생성 (PIL+numpy) |
 
 ## cross-ref
 
 - 워크스페이스 SSoT: `규칙/프로세스/발표자료-PPTX-작성-표준.md`(절차 정본) · `규칙/프로세스/산출물-스타일-표준.md`(디자인 토큰)
-- 연계 스킬: `dz-oneffice-writer`(원피스 주입) · `dz-frontend-design`(미학 1차 인용) · `dz-external-report`(외부 보고 어휘)
+- 연계 스킬: `dz-oneffice-writer`(원피스 주입) · `dz-frontend-design`(미학 근거 — 브랜드 고정 요소는 Step 0 표가 우선) · `dz-external-report`(외부 보고 어휘)
 - 도구 운영: `규칙/프로세스/디자인도구-MCP-운영가이드.md`(Figma·MCP·로컬 서버·스크린샷)

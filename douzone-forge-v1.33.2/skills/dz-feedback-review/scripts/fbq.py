@@ -347,7 +347,7 @@ def cmd_new(a):
         "PAGE_TITLE": esc(title),
         "FB_KEY": esc(prefix + "-r1"),
         "ROUND": "1",
-        "KICKER": esc(str(spec.get("kicker") or "결정 요청 · 1회차").strip()),
+        "KICKER": esc(str(spec.get("kicker") or "").strip()),  # 기본 없음 — 회차는 상단 메뉴에 있다. 비면 CSS 가 줄을 숨긴다
         "H1": esc(str(spec.get("h1") or title).strip()),
         "LEAD_HTML": paras(spec.get("lead")),
         "CARDS_HTML": "\n".join(render_card(q, page_dir) for q in qs),

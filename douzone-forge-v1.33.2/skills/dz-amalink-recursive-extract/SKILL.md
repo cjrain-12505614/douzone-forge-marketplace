@@ -9,12 +9,12 @@ description: >
   의존: 규칙/프로세스/업무보고-체크-운영규칙.md (Phase S S-01 SSoT) +
        skills/dz-cascade-from-report (R-04 + S-05) +
        skills/dz-people-context (S-07 보강 — 본인 업무현황 lookup).
-version: 0.1.0
+version: 0.1.1
 ---
 
 # 아마링크 재귀 추출 (dz-amalink-recursive-extract) — Phase S S-07 신설
 
-ONEFFICE 아마링크 추출 시 {이름} 수석 4건 룰 통합 자동화. **재귀 + 댓글 + 헤더 + 휴가자 인지** 캡슐화.
+ONEFFICE 아마링크 추출 시 사용자가 정한 4건 룰 통합 자동화. **재귀 + 댓글 + 헤더 + 휴가자 인지** 캡슐화.
 
 ## 트리거
 
@@ -124,4 +124,4 @@ Step 6 — R-07 검증 (선택, 검증 모드)
 ## 변천사
 
 - Phase S S-07 (2026-04-27) — 본 스킬 신설 (4건 룰 통합 캡슐화)
-- {이름} 수석 4건 맥락 누적 (2026-04-27 야간) → 자비스 통합 처리 결정
+- 사용자 지시 4건 맥락 누적 (2026-04-27 야간) → 자비스 통합 처리 결정
