@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<!--fbq:template-header
+  dz-feedback-review 질문 페이지 틀 (assets/page.html)
+  ─────────────────────────────────────────────────────────────────────
+  이 틀은 fbq.py new 가 채운다. 손으로 고치지 않는다.
+  생성기는 이 머리 주석(여는 표지 fbq:template-header 부터 첫 주석 끝까지)을 지우고 페이지를 만든다 — 아래 예시 마크업이
+  만든 페이지에 남으면 카드를 세는 점검 도구가 예시까지 센다.
+
+  [자리표시] 모양은 겹중괄호 안에 아래 이름. 이 주석에는 일부러 괄호 없이 이름만 적었다(치환이 주석을 건드리지 않게).
+    PAGE_TITLE  글자   페이지 제목(회차 빼고). <title> 과 body[data-fb-title] 두 곳. HTML 이스케이프해서 넣는다
+                       → 스크립트가 탭 제목을 「제목 — N회차 질문」으로, 결과 문장 첫 줄을 「제목 — N회차」로 만든다
+    FB_KEY      글자   저장 키. body[data-fb-key]. 회차마다 다르게: YYYYMMDD-주제-r1 → append 가 -r2, -r3 …으로 바꾼다
+    ROUND       숫자   회차(처음 그려질 때 보이는 값). 스크립트가 「이전 회차 묶음 수 + 1」로 다시 세어 덮어쓴다
+    KICKER      글자   분류 한 줄
+    H1          글자   제목. 뒤의 「— 질문 N건」은 틀이 붙인다(N은 스크립트가 카드 수를 센다)
+    LEAD_HTML   HTML   리드 문단들(<p>…</p>). 결론 먼저 — 무엇을 정하는 회차인지, 직전 회차에서 무엇을 반영했는지
+    CARDS_HTML  HTML   이번 회차 질문 카드들(아래 [카드])
+    ROUNDS_HTML HTML   이전 회차 묶음들, 최신 회차가 위(아래 [이전 회차]). 1회차는 빈 문자열
+  모든 자리표시는 아래 영역 표지 안에 있다. 영역 표지는 채운 뒤에도 남겨 둔다 — append 가 표지 사이를 갈아 끼운다.
+    영역 표지: 여는 주석 fbq:이름 · 닫는 주석 /fbq:이름 — 이름은 kicker · h1 · lead · cards · rounds
+  공통 블록: style#fbq-core 와 script#fbq-core-js 는 페이지마다 같다(append 때 틀의 최신본으로 바꿔 끼워도 된다).
+
+  [카드] 활성 카드 안에는 details(접는 요소)를 쓰지 않는다. 모두 펼침.
+    <article class="dec" id="dec-R1-1" data-id="R1-1" data-title="카드 제목" data-options="2" data-rec="1">   ← data-rec="0" 이면 추천 없음
+      <header class="dec-h"><span class="dec-no">R1-1</span><h3 class="dec-t">카드 제목</h3></header>
+      <div class="dec-body">
+        <p class="dec-sum">한 줄 요약 — 무엇을 고르는가</p>
+        <div class="k">왜 묻는가</div><div class="dec-why"><p>배경·걸려 있는 것(HTML)</p></div>
+        <div class="k">한눈에</div><div class="dec-vis">카드 보기 칸(선택) — 아래 [보기 모양] 또는 인라인 SVG/HTML</div>
+        <div class="k">선택지</div>
+        <ol class="opts">
+          <li data-n="1"><span class="opt-t">선택지 이름(내용으로)</span><p class="opt-d">설명</p>
+            <div class="opt-vis">선택지 보기 칸(선택)</div>
+            <p class="then"><span class="then-k">고르면</span>무엇이 달라지는지</p></li>
+        </ol>
+        <div class="k">직접 써 보기</div>   ← 선택지가 둘 이상이고 모두 시안이 있을 때: 시안을 나란히
+        <div class="demos">
+          <figure class="demo" data-n="1" data-src="demo/poc-a.html" data-h="420"><figcaption><span class="demo-n">1</span><b class="demo-t">선택지 이름</b></figcaption></figure>
+          <figure class="demo" data-n="2" data-src="demo/poc-b.html"><figcaption><span class="demo-n">2</span><b class="demo-t">선택지 이름</b></figcaption></figure>
+        </div>
+        <div class="k">추천</div>   ← data-rec="0" 이면 추천 블록 전체를 넣지 않는다
+        <div class="rec"><p><b class="rec-t"><span class="ci">①</span> 선택지 이름.</b> 추천 이유</p><p class="cost"><span class="cost-k">대가</span>잃는 것</p></div>
+      </div>
+      <div class="decide"></div>   ← 비워 둔다. 결정 버튼·메모 칸은 스크립트가 채운다
+    </article>
+    · 시안이 일부 선택지에만 있으면 figure.demo 를 그 선택지 li 안(.then 앞)에 넣는다
+    · figure.demo 에는 iframe 을 넣지 않는다 — 스크립트가 sandbox(같은 출처 권한 없음)를 먼저 걸고 iframe·「새 창으로 크게 보기」 링크를 만든다
+    · 「새 창으로 크게 보기」는 시안 파일을 직접 열지 않고 이 페이지를 주소 끝 #full=시안경로&c=카드번호&n=선택지번호 로 연다 — 그 창은
+      sandbox iframe 하나만 화면 가득 그리고, 머리 띠·탭 제목에 「R1-1 카드 제목 — ② 선택지 이름」을 쓴다(새 창의 시안도 질문 페이지
+      저장값에 닿지 못한다). 창구는 페이지 말고 내주는 파일에 CSP sandbox 머리를 붙인다
+    · data-src 에는 공백·탭·줄바꿈을 쓰지 않는다(시안 파일 이름에 공백이 있으면 - 나 _ 로)
+    · data-src 는 페이지 폴더 기준 상대 경로만(http: · / 로 시작 · .. 포함은 거부). data-h 는 높이(px, 기본 420)
+    · 시안 파일이 없으면 생성기가 figure 에 data-missing="1" 을 단다 — 파일로 연 페이지에서는 스크립트가 파일 유무를 알 수 없다.
+      창구(http)로 열면 스크립트가 직접 확인해 「시안 파일을 찾을 수 없습니다: 경로」로 바꾼다
+
+  [보기 모양] .dec-vis · .opt-vis 안에 쓰는 기본 모양(375 폭에서 세로로 바뀜)
+    단계 흐름  <ol class="v-flow"><li><span class="v-k">1단계</span><b>제목</b><span class="v-d">설명</span></li>…</ol>   li.is-key = 강조
+    나란히 비교 <div class="v-cols"><div class="v-col"><p class="v-cap">왼쪽</p>…</div><div class="v-col is-key">…</div></div>  (2~3열)
+    표         <div class="tbl-wrap"><table class="v-table"><thead>…</thead><tbody>…</tbody></table></div>
+    수치 막대  <div class="v-bars"><div class="v-bar"><span class="v-bar-k">항목</span><span class="v-bar-t"><span class="v-bar-f" style="width:62%"></span></span><span class="v-bar-v">62%</span></div></div>
+    캡션       <p class="v-cap">그림 설명</p>
+    그 밖에는 인라인 SVG/HTML. SVG 색은 style="fill:var(--blue)" 처럼 style 속성으로 준다
+
+  [이전 회차] append 가 만든다. 최신 회차가 위
+    <details class="round-done" id="round-1" data-round="1">
+      <summary>1회차 — 반영됨 <span class="sub">질문 3건 · 2026-10-01 11:21 답변</span></summary>
+      <div class="tbl-wrap"><table class="round-tbl"><thead><tr><th>번호</th><th>질문</th><th>고르신 답</th><th>메모</th><th>반영한 곳</th></tr></thead>
+      <tbody><tr><td class="no">R1-1</td><td>카드 제목</td><td>① 채택(추천)<span class="pick-opt">고르신 선택지 이름</span></td><td class="memo-src">메모 원문 그대로(없으면 –)</td><td>반영한 곳</td></tr></tbody></table></div>
+    </details>
+
+  [결과] 「결과 복사」·「답변 완료」 공통 문장
+    [결정 결과] 페이지 제목 — N회차 — 결정 n/N
+    R1-1 카드 제목 — ① 채택(추천)
+    R1-2 카드 제목 — ② 선택 / 메모: 메모 첫 줄
+        메모 둘째 줄(메모 안 줄바꿈은 다음 줄 앞에 공백 4칸을 붙여 잇는다 — 카드 줄과 구분)
+    R1-3 카드 제목 — 수정 / 메모: …      · 보류 · 미결정
+  「답변 완료」 전송: POST /answer, Content-Type text/plain;charset=UTF-8, 본문 JSON
+    {token, text, counts:{total,decided,left}, round, fbKey, title,
+     answers:[{id, title, choice("1"·"2"…·"modify"·"hold"·"none"), choiceLabel("① 채택(추천)"…), adopted(추천을 골랐는지), rec, memo}]}
+  연결 확인: 로드 때 GET /ping?t=토큰 — 창구가 200 이면 「자비스 대기 중」, 그 밖(파일로 엶·토큰 없음·창구 꺼짐·예전 창구의 토큰)은 「연결 없음」
+  window.DZFB = {text(), counts(), answers(), round} — 시험·도구용
+  저장: localStorage 'dzfb:' + data-fb-key — {카드ID: {choice:'n1'|'modify'|'hold', memo:'…'}}
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>{{PAGE_TITLE}}</title>
+<style id="fbq-core">
+/* =====================================================================
+   질문 페이지 공통 스타일 (fbq-core) — dz-feedback-review
+   · 페이지마다 고치지 않는다. 세리프 글꼴·이탤릭을 쓰지 않는다. 외부 자원(CDN·웹 글꼴) 없음.
+   · 글자 대비 4.5 이상. 흰 글자를 --blue 위에 올리지 않는다(--blue 는 막대·테두리 전용).
+   ===================================================================== */
+:root{
+  --ink:#10233A;        /* 본문 글자 */
+  --ink-mid:#33475E;    /* 보조 글자 */
+  --ink-light:#5B6B7F;  /* 캡션 (흰 바탕 대비 5.4) */
+  --paper:#FFFFFF;
+  --bg-soft:#F4F8FD;    /* 넓은 바탕면 */
+  --blue-bg:#EAF3FE;    /* 카드·요약 바탕 */
+  --blue-bg2:#D8E9FD;   /* 표 머리 바탕 */
+  --rule:#D3E1F0; --rule-soft:#E6EEF7;
+  --navy:#0B2F57;       /* 제목 글자·강한 면 */
+  --blue:#1C90FB;       /* 사내 제품 기준 파랑 — 막대·테두리에만(장식 전용) */
+  --blue-deep:#0F66C7;  /* 작은 글자 강조·링크·주 버튼 바탕(흰 글자 대비 5.6) */
+  --blue-ink:#0B4F9E;   /* 번호·라벨 */
+  --cyan:#00B8F1;       /* 그림 보조색 — 장식 전용(흰 바탕 대비 2.3, 글자 금지) */
+  --amber:#9A5B00;      /* 수정·대가 */
+  --ok:#1A6B4A;         /* 보냄·완료 */
+  --hold:#6B7686;       /* 보류 칸(그래픽) */
+  --red-bg:#FDECEC; --red-ink:#B42318;
+  --sans:"Pretendard",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕","Noto Sans KR","Segoe UI",sans-serif;
+  --mono:"SF Mono",Menlo,Consolas,monospace;   /* <code> 에만 */
+}
+
+/* ---------- 바탕 ---------- */
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--paper);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+/* 합자를 끈다 — Pretendard 는 「->」를 화살표 한 글자로 바꿔 그려 원문이 달라 보인다 */
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.7;font-variant-ligatures:none;
+  -webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:break-word}
+h1,h2,h3,h4{font-family:var(--sans);color:var(--navy);line-height:1.35;letter-spacing:-.01em;margin:0;font-weight:700}
+em,i,cite,dfn,var,address{font-style:normal}
+em{font-weight:600}
+b,strong{font-weight:700}
+code,kbd,samp,pre{font-family:var(--mono);font-size:.9em}
+code{background:var(--bg-soft);border:1px solid var(--rule-soft);border-radius:4px;padding:0 4px;color:var(--ink);word-break:normal;overflow-wrap:anywhere}
+button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit;font-variant-ligatures:inherit}
+a{color:var(--blue-deep);text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px}
+a:hover{color:var(--blue-ink)}
+:focus-visible{outline:2px solid var(--blue-deep);outline-offset:2px}
+p{margin:0 0 12px}
+ul,ol{margin:0 0 12px;padding-left:20px}
+li{margin:2px 0}
+img,svg{max-width:100%}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* 원문자 ①②③ — 한글보다 작게 그려져 키운다. 결정 버튼·상태 알약은 스크립트가 감싼다 */
+.ci{font-size:1.25em;line-height:1;vertical-align:-.08em;margin-right:1px}
+
+/* ---------- 상단 메뉴 ---------- */
+.fb-nav{position:sticky;top:0;z-index:30;background:var(--paper);border-bottom:1px solid var(--rule)}
+.fb-nav .wrap{display:flex;align-items:center;gap:16px;min-height:52px}
+.fb-links{display:flex;flex-wrap:wrap;gap:0 18px;flex:1 1 auto;min-width:0;padding:6px 0}
+.fb-links a{font-size:13px;color:var(--ink-mid);text-decoration:none;padding:3px 0;border-bottom:2px solid transparent;white-space:nowrap}
+.fb-links a:hover{color:var(--blue-deep);border-bottom-color:var(--blue)}
+.fb-tools{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.fb-link{font-size:12.5px;line-height:1.4;padding:4px 10px;border-radius:14px;border:1px solid var(--rule);color:var(--ink-mid);background:var(--paper);white-space:nowrap;margin-right:4px}
+.fb-link[data-state="on"]{border-color:var(--blue-deep);color:var(--blue-deep);background:var(--blue-bg)}
+.fb-link[data-state="sent"]{border-color:var(--ok);color:var(--ok);background:#E7F3EC}
+.fb-link[data-state="off"]{color:var(--amber);border-color:#E9D2A8;background:#FFF8EC}
+.fb-count{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-mid);margin-right:4px;white-space:nowrap}
+.fb-count b{color:var(--navy);font-size:14px}
+.fb-count .mini{display:block;width:56px;height:6px;background:var(--rule-soft);border-radius:3px;overflow:hidden}
+.btn{display:inline-block;vertical-align:middle;font-size:12.5px;font-weight:600;line-height:1.2;border:1px solid var(--rule);background:var(--paper);
+  color:var(--ink-mid);padding:7px 11px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--blue);color:var(--blue-deep)}
+.btn.primary{background:var(--blue-deep);border-color:var(--blue-deep);color:#fff}
+.btn.primary:hover{background:var(--blue-ink);border-color:var(--blue-ink);color:#fff}
+.btn[disabled]{cursor:default}
+.btn.primary[disabled]{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn[data-fb-act="filter"][aria-pressed="true"]::after{content:" (켜짐)"}
+
+/* ---------- 머리 ---------- */
+.fb-head{padding:36px 0 4px}
+.kicker{font-size:13px;font-weight:600;color:var(--blue-ink);letter-spacing:.02em;margin:0 0 8px}
+.kicker:empty{display:none}
+h1{font-size:30px;margin:0 0 14px}
+.lead{font-size:16.5px;line-height:1.75;color:var(--ink-mid);max-width:880px;margin:0 0 20px}
+.lead p{margin:0 0 8px}
+.lead p:last-child{margin-bottom:0}
+.lead b{color:var(--ink)}
+
+/* ---------- 진행 막대 ---------- */
+.progress{display:flex;align-items:center;gap:14px;margin:0 0 8px}
+.progress-bar{flex:1 1 auto;min-width:0;height:10px;display:flex;gap:3px}
+/* 칸 색은 흰 바탕 대비 3 이상(그래픽 기준). 상태별 수는 글자로도 나온다(data-fb="breakdown") */
+.progress-bar .seg{flex:1 1 0;min-width:6px;height:10px;border-radius:3px;background:var(--rule-soft);border:1px solid #8196B0}
+.progress-bar .seg.st-adopt,.progress-bar .seg.st-pick{background:var(--blue);border-color:var(--blue)}
+.progress-bar .seg.st-modify{background:var(--amber);border-color:var(--amber)}
+.progress-bar .seg.st-hold{background:var(--hold);border-color:var(--hold)}
+.progress-fill{display:block;height:100%;width:0;background:var(--blue);border-radius:inherit;transition:width .25s}
+.progress-txt{font-size:13px;color:var(--ink-mid);white-space:nowrap}
+.progress-txt b{color:var(--navy);font-size:16px}
+.fb-breakdown:not(:empty)::before{content:" · "}
+
+/* ---------- 절 ---------- */
+section{margin:52px 0}
+section,.dec,.round-done{scroll-margin-top:84px}
+h2{font-size:23px;margin:4px 0 8px}
+
+/* ---------- 답하는 법 ---------- */
+.howto{background:var(--bg-soft);border:1px solid var(--rule);border-radius:10px;padding:18px 20px 16px;margin:28px 0 0}
+.howto h2{font-size:17px;margin:0 0 12px}
+.howto ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;counter-reset:how}
+.howto ol > li{position:relative;margin:0;background:var(--paper);border:1px solid var(--rule-soft);border-radius:8px;padding:12px 14px 12px 48px;font-size:14px;counter-increment:how}
+.howto ol > li::before{content:counter(how);position:absolute;left:14px;top:13px;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;
+  font-weight:700;font-size:13px;line-height:24px;text-align:center}
+.howto ol > li b{display:block;color:var(--navy);margin-bottom:2px}
+.howto-note{margin:12px 0 0;font-size:13px;color:var(--ink-mid)}
+
+/* ---------- 질문 카드 ---------- */
+.dec{position:relative;border:1px solid var(--rule);border-left:4px solid var(--blue);border-radius:8px;background:var(--paper);margin:0 0 22px}
+.dec.is-decided{border-left-color:var(--navy)}
+.dec-h{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:14px 20px 6px}
+.dec-no{font-size:14px;font-weight:700;color:var(--blue-ink);background:var(--blue-bg);border-radius:4px;padding:1px 8px;line-height:1.6}
+.dec-t{font-size:17.5px;color:var(--navy);margin:0;flex:1 1 260px;min-width:0}
+.dec-h .fb-pill{margin-left:auto}
+.dec-body{display:grid;grid-template-columns:88px minmax(0,1fr);column-gap:18px;padding:4px 20px 6px}
+.dec-body > *{margin:0 0 16px;min-width:0}
+.dec-body > .k{font-size:12.5px;font-weight:700;color:var(--blue-ink);padding-top:3px;line-height:1.5}
+.dec-body > .dec-sum,.dec-body > .wide{grid-column:1 / -1}
+.dec-sum{font-size:15.5px;color:var(--ink)}
+.dec-sum b{color:var(--navy)}
+.dec-why > :last-child,.opt-vis > :last-child,.dec-vis > :last-child{margin-bottom:0}
+.dec-why p{max-width:48em}
+.dec-why ul,.dec-why ol{padding-left:20px}
+
+/* 선택지 */
+ol.opts{list-style:none;margin:0 0 16px;padding:0}
+ol.opts > li{position:relative;margin:0 0 8px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);padding:10px 14px 10px 46px}
+ol.opts > li:last-child{margin-bottom:0}
+ol.opts > li::before{content:attr(data-n);position:absolute;left:12px;top:11px;width:22px;height:22px;border-radius:50%;background:var(--blue-bg);
+  color:var(--blue-ink);font-size:12px;font-weight:700;line-height:22px;text-align:center}
+ol.opts > li.is-rec{border-color:var(--blue);background:var(--blue-bg)}
+ol.opts > li.is-rec .opt-t{padding-right:52px}   /* 「추천」 칩 자리 */
+ol.opts > li.is-rec::before{background:var(--blue-deep);color:#fff}
+ol.opts > li.is-rec::after{content:"추천";position:absolute;right:10px;top:10px;font-size:11.5px;font-weight:700;color:var(--blue-ink);
+  background:var(--paper);border:1px solid var(--blue);border-radius:999px;padding:0 8px;line-height:1.6}
+ol.opts > li.is-picked{border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy)}
+.opt-t{display:block;font-weight:700;color:var(--navy)}
+.opt-d{margin:2px 0 0;font-size:14.5px}
+.opt-vis{margin:10px 0 0}
+.then{margin:8px 0 0;font-size:13.5px;color:var(--ink-mid);padding-left:10px;border-left:2px solid var(--blue-bg2)}
+.then-k{font-weight:700;color:var(--blue-ink);margin-right:6px}
+ol.opts > li.is-rec .then{border-left-color:var(--blue)}
+
+/* 추천 */
+.rec{background:var(--blue-bg);border:1px solid var(--blue-bg2);border-radius:8px;padding:10px 14px;font-size:14.5px}
+.rec p{margin:0}
+.rec .rec-t{color:var(--blue-ink)}
+.rec .cost{margin-top:6px;font-size:13.5px;color:var(--ink-mid)}
+.cost-k{font-weight:700;color:var(--amber);margin-right:6px}
+
+/* 결정 칸 (스크립트가 채움) */
+.decide{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;border-top:1px dashed var(--rule);padding:12px 20px 14px 126px;background:var(--bg-soft);border-radius:0 0 7px 4px}
+.decide .lab{font-size:12.5px;font-weight:700;color:var(--blue-ink);margin-right:2px;line-height:34px}
+.fb-btns{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0}
+.decide .opt{font-size:13px;font-weight:600;line-height:1.25;border:1px solid var(--rule);background:var(--paper);color:var(--ink-mid);padding:6px 12px;border-radius:999px;cursor:pointer}
+.decide .opt:hover{border-color:var(--blue);color:var(--blue-deep)}
+.decide .opt.is-recbtn{border-color:var(--blue);color:var(--blue-deep)}
+.decide .opt.on,.decide .opt.on:hover{color:#fff}
+.decide .opt.on.is-recbtn{background:var(--blue-deep);border-color:var(--blue-deep)}
+.decide .opt.on.is-pickbtn{background:var(--navy);border-color:var(--navy)}
+.decide .opt.on[data-v="modify"]{background:var(--amber);border-color:var(--amber)}
+.decide .opt.on[data-v="hold"]{background:var(--ink-mid);border-color:var(--ink-mid)}
+/* 메모 — 여러 줄 칸. 한 줄 높이로 시작해 적는 만큼 늘어난다(스크립트가 높이를 맞춘다) */
+.decide .memo{display:block;flex:1 1 240px;min-width:0;min-height:34px;font-size:13.5px;line-height:1.5;border:1px solid var(--rule);background:var(--paper);
+  color:var(--ink);padding:6px 10px;border-radius:6px;resize:none;overflow:hidden}
+.decide .memo::placeholder{color:var(--ink-light);opacity:1}
+.decide .memo:focus{outline:2px solid var(--blue-deep);outline-offset:0;border-color:var(--blue-deep)}
+
+/* 상태 알약 (스크립트가 채움) */
+.fb-pill{display:inline-block;font-size:12px;font-weight:600;line-height:1.4;padding:2px 10px;border-radius:999px;border:1px solid var(--rule);
+  background:var(--paper);color:var(--ink-mid);white-space:nowrap}
+.fb-pill.st-adopt{background:var(--blue-deep);border-color:var(--blue-deep);color:#fff}
+.fb-pill.st-pick{background:var(--navy);border-color:var(--navy);color:#fff}
+.fb-pill.st-modify{background:#FFF4E0;border-color:#F0D6A8;color:var(--amber)}
+.fb-pill.st-hold{background:#EEF1F5;border-color:#D5DCE5;color:var(--ink-mid)}
+
+/* 미결정만 보기 — 방금 고른 카드(fb-keep)는 다시 켤 때까지 남긴다 */
+body.fb-only-open .dec.is-decided:not(.fb-keep){display:none}
+
+/* ---------- 보기 칸: 기본 모양 ---------- */
+.dec-vis{min-width:0}
+.v-cap{font-size:12.5px;color:var(--ink-mid);margin:8px 0 0}
+p.v-cap:first-child{margin:0 0 4px;font-weight:700;color:var(--blue-ink)}
+/* 단계 흐름 — 가로 화살표, 좁은 화면에서 세로 */
+.v-flow{list-style:none;margin:0;padding:0;display:flex;align-items:stretch}
+.v-flow > li{flex:1 1 0;min-width:0;position:relative;margin:0 30px 0 0;background:var(--bg-soft);border:1px solid var(--rule);border-radius:8px;padding:12px 14px}
+.v-flow > li:last-child{margin-right:0}
+.v-flow > li::after{content:"";position:absolute;right:-22px;top:50%;width:12px;height:12px;border-top:2.5px solid var(--blue);border-right:2.5px solid var(--blue);
+  transform:translateY(-50%) rotate(45deg)}
+.v-flow > li:last-child::after{display:none}
+.v-flow .v-k{display:block;font-size:12px;font-weight:700;color:var(--blue-ink)}
+.v-flow b{display:block;color:var(--navy);font-size:15px;line-height:1.4}
+.v-flow .v-d{display:block;font-size:13px;color:var(--ink-mid);margin-top:4px;line-height:1.55}
+.v-flow > li.is-key{background:var(--navy);border-color:var(--navy)}
+.v-flow > li.is-key .v-k,.v-flow > li.is-key b,.v-flow > li.is-key .v-d{color:#fff}
+.v-flow > li.is-key code{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+/* 나란히 비교 — 자식 수만큼 열(2~3), 좁은 화면에서 위아래 */
+.v-cols{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:12px}
+.v-col{border:1px solid var(--rule);border-radius:8px;background:var(--paper);padding:10px 14px;font-size:14px;min-width:0}
+.v-col.is-key{border-color:var(--blue);background:var(--blue-bg)}
+.v-col > p.v-cap:first-child{font-size:12.5px}
+.v-col > :last-child{margin-bottom:0}
+.v-col ul{padding-left:18px;margin:0 0 6px}
+/* 표 */
+.tbl-wrap{overflow-x:auto;margin:0 0 12px;border:1px solid var(--rule);border-radius:8px;background:var(--paper)}
+.dec-vis .tbl-wrap:last-child,.opt-vis .tbl-wrap:last-child{margin-bottom:0}
+table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.55;font-variant-numeric:tabular-nums}
+th{background:var(--blue-bg2);color:var(--navy);text-align:left;font-weight:600;padding:9px 12px;border-bottom:1px solid var(--rule);font-size:13px;vertical-align:bottom}
+td{padding:9px 12px;border-bottom:1px solid var(--rule-soft);vertical-align:top;background:var(--paper)}
+tbody tr:last-child td{border-bottom:0}
+td.no{font-weight:700;color:var(--blue-ink);white-space:nowrap}
+td.ok{color:var(--ok);font-weight:600}
+td.ng{color:var(--red-ink);font-weight:600}
+/* 수치 막대 */
+.v-bars{display:grid;gap:8px}
+.v-bar{display:grid;grid-template-columns:minmax(80px,180px) minmax(0,1fr) auto;align-items:center;gap:10px;font-size:13.5px}
+.v-bar-k{color:var(--ink)}
+.v-bar-t{display:block;height:12px;background:var(--rule-soft);border-radius:6px;overflow:hidden}
+.v-bar-f{display:block;height:100%;background:var(--blue);border-radius:inherit}
+.v-bar-v{font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- 직접 써 보는 시안 ---------- */
+.demos{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}   /* 칸마다 자기 높이만 — 끌기 띠가 늘 그 칸 맨 아래 */
+.demos.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.demos.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+figure.demo{margin:0;border:1px solid var(--rule);border-radius:8px;background:var(--paper);overflow:hidden;min-width:0}
+ol.opts figure.demo{margin:10px 0 0}
+figure.demo.is-picked{border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy)}
+figure.demo > figcaption{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;padding:8px 12px;background:var(--bg-soft);border-bottom:1px solid var(--rule);font-size:13.5px;line-height:1.45}
+.demo-n{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--blue-bg);color:var(--blue-ink);font-size:12px;font-weight:700;line-height:22px;text-align:center}
+figure.demo.is-rec .demo-n{background:var(--blue-deep);color:#fff}
+.demo-t{color:var(--navy);font-weight:700;min-width:0}
+.demo-rec{font-size:11.5px;font-weight:700;color:var(--blue-ink);background:var(--paper);border:1px solid var(--blue);border-radius:999px;padding:0 8px;line-height:1.6}
+.demo-open{margin-left:auto;font-size:12.5px;white-space:nowrap}
+/* 높이: 기본 420px(figure[data-h]로 지정). 아래 띠의 오른쪽 모서리를 끌어 늘이고 줄인다 */
+.demo-frame{height:420px;min-height:160px;resize:vertical;overflow:hidden;background:var(--bg-soft);padding-bottom:12px}
+.demo-frame iframe{display:block;width:100%;height:100%;border:0;background:var(--paper)}
+.demo-missing{margin:0;padding:14px 12px;font-size:13.5px;color:var(--red-ink);background:var(--red-bg);overflow-wrap:anywhere}
+.demo-note{grid-column:1 / -1;font-size:12.5px;color:var(--ink-mid);margin:-4px 0 0}
+/* 시안 크게 보기 — 「새 창으로 크게 보기」가 연 창(주소 #full=시안경로&c=…&n=…): sandbox iframe 하나만 화면 가득 */
+body.fb-full{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.full-bar{flex:0 0 auto;display:flex;align-items:center;flex-wrap:wrap;gap:2px 10px;padding:8px 16px;background:var(--bg-soft);border-bottom:1px solid var(--rule);font-size:13.5px;line-height:1.5}
+.full-t{color:var(--navy)}
+.full-src{color:var(--ink-mid);overflow-wrap:anywhere;min-width:0}
+iframe.full-frame{flex:1 1 auto;display:block;width:100%;min-height:0;border:0;background:var(--paper)}
+.full-msg{margin:16px}
+
+/* ---------- 이전 회차 — 반영됨 ---------- */
+.rounds{margin:40px 0 56px}
+.rounds:empty{display:none}
+.round-done{border:1px solid var(--rule);border-radius:10px;background:var(--bg-soft)}
+.round-done + .round-done{margin-top:12px}
+.round-done > summary{cursor:pointer;padding:14px 18px;font-weight:700;color:var(--navy)}
+.round-done > summary .sub{font-weight:400;color:var(--ink-mid);font-size:13px;margin-left:6px}
+.round-done .tbl-wrap{margin:0 18px 16px}
+table.round-tbl td{overflow-wrap:anywhere}   /* 메모·반영한 곳의 끊김 없는 긴 주소가 표를 넓혀 다른 칸을 누르지 않게 */
+table.round-tbl td:nth-child(2){min-width:180px}
+table.round-tbl td:nth-child(3){min-width:110px}   /* 고르신 답 — 「① 채택(추천)」이 한 줄에 */
+table.round-tbl td.memo-src{white-space:pre-wrap;min-width:200px}
+table.round-tbl .pick-opt{display:block;font-size:12.5px;color:var(--ink-mid)}   /* 고르신 선택지의 이름(내용) */
+
+/* ---------- 알림 · 직접 복사 상자 ---------- */
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,8px);max-width:calc(100% - 32px);background:var(--navy);color:#fff;padding:10px 16px;
+  border-radius:8px;font-size:13.5px;line-height:1.5;opacity:0;visibility:hidden;transition:opacity .2s,transform .2s,visibility .2s;z-index:40;
+  box-shadow:0 6px 18px rgba(11,47,87,.18);pointer-events:none}
+.toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
+.fb-manual{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:640px;max-width:calc(100% - 32px);background:var(--paper);border:1px solid var(--rule);
+  border-radius:10px;box-shadow:0 10px 30px rgba(11,47,87,.25);padding:16px;z-index:50}
+.fb-manual p{margin:0 0 8px;font-size:14px;color:var(--navy);font-weight:700}
+.fb-manual textarea{display:block;width:100%;height:220px;font-size:13px;line-height:1.5;border:1px solid var(--rule);border-radius:6px;padding:8px 10px;color:var(--ink);background:var(--paper);resize:vertical}
+.fb-manual .btn{margin-top:10px}
+
+/* ---------- 좁은 화면 (760px 이하 한 단) ---------- */
+@media (max-width:760px){
+  body{font-size:14.5px}
+  .wrap{padding:0 16px}
+  .fb-nav .wrap{flex-direction:column;align-items:stretch;gap:0;min-height:0}
+  .fb-links{gap:0 14px;padding:8px 0 6px;border-bottom:1px solid var(--rule-soft)}
+  .fb-tools{flex-wrap:wrap;justify-content:flex-end;padding:6px 0}
+  .fb-link{white-space:normal;flex:1 1 100%;margin:0 0 2px}
+  .fb-count{margin-right:auto}
+  .fb-count .mini,.fb-long{display:none}
+  .btn{padding:7px 9px;font-size:12px}
+  section,.dec,.round-done{scroll-margin-top:140px}
+  .fb-head{padding-top:26px}
+  h1{font-size:24px}
+  .lead{font-size:15.5px}
+  .progress{flex-wrap:wrap;gap:6px 12px}
+  .progress-bar{flex-basis:100%}
+  .progress-txt{white-space:normal}
+  .howto{padding:16px 14px 14px}
+  .howto ol{grid-template-columns:minmax(0,1fr)}
+  .dec-h{padding:12px 14px 4px}
+  .dec-t{order:3;flex-basis:100%}
+  .dec-body{grid-template-columns:minmax(0,1fr);padding:4px 14px 4px}
+  .dec-body > .k{margin:0 0 4px;padding:0}
+  ol.opts > li{padding:10px 12px 10px 42px}
+  ol.opts > li::before{left:10px}
+  .decide{padding:12px 14px 14px}
+  .decide .memo{flex-basis:100%}
+  .v-flow{flex-direction:column}
+  .v-flow > li{margin:0 0 28px}
+  .v-flow > li:last-child{margin-bottom:0}
+  .v-flow > li::after{right:auto;left:50%;top:auto;bottom:-20px;transform:translateX(-50%) rotate(135deg)}
+  .v-cols{grid-auto-flow:row;grid-auto-columns:auto}
+  .v-bar{grid-template-columns:minmax(0,1fr) auto}
+  .v-bar-t{grid-column:1 / -1;grid-row:2}
+  .demos.cols-2,.demos.cols-3{grid-template-columns:minmax(0,1fr)}
+  .round-done .tbl-wrap{margin:0 10px 12px}
+  table.round-tbl thead{display:none}
+  table.round-tbl,table.round-tbl tbody{display:block}
+  table.round-tbl tr{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;padding:10px 12px;border-bottom:1px solid var(--rule-soft)}
+  table.round-tbl tbody tr:last-child{border-bottom:0}
+  table.round-tbl td{display:block;padding:0;border:0;min-width:0!important}
+  table.round-tbl td:nth-child(n+3){grid-column:1 / -1}
+  table.round-tbl td:nth-child(2){font-weight:700;color:var(--navy)}
+  table.round-tbl td:nth-child(n+3)::before{display:block;font-size:12px;font-weight:700;color:var(--ink-light)}
+  table.round-tbl td:nth-child(3)::before{content:"고르신 답"}
+  table.round-tbl td:nth-child(4)::before{content:"메모"}
+  table.round-tbl td:nth-child(5)::before{content:"반영한 곳"}
+}
+
+/* ---------- 인쇄 — 메뉴·알림만 뺀다 ---------- */
+@media print{
+  .fb-nav,.toast,.fb-manual,.demo-open{display:none!important}
+  body.fb-only-open .dec{display:block!important}
+  .decide .opt:not(.on){color:var(--ink-light);border-color:var(--rule-soft)}
+}
+</style>
+</head>
+<body data-fb-key="{{FB_KEY}}" data-fb-title="{{PAGE_TITLE}}">
+
+<nav class="fb-nav" aria-label="질문 페이지 메뉴">
+  <div class="wrap">
+    <div class="fb-links">
+      <a href="#how">답하는 법</a>
+      <a href="#decisions"><span data-fb="round">{{ROUND}}</span>회차 질문</a>
+      <a href="#rounds" data-fb-nav="rounds">이전 회차(반영됨)</a>
+    </div>
+    <div class="fb-tools">
+      <span id="fb-link" class="fb-link" data-state="wait" role="status" aria-live="polite">연결 확인 중</span>
+      <span class="fb-count"><span class="mini" aria-hidden="true"><span class="progress-fill"></span></span><span>답변 <b data-fb="done">0</b> / <span data-fb="total">0</span></span></span>
+      <button type="button" class="btn" data-fb-act="filter" aria-pressed="false" aria-label="미결정만 보기">미결정만<span class="fb-long"> 보기</span></button>
+      <button type="button" class="btn" data-fb-act="copy">결과 복사</button>
+      <button type="button" class="btn primary" data-fb-act="submit">답변 완료</button>
+      <button type="button" class="btn" data-fb-act="reset">초기화</button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<header class="fb-head">
+  <p class="kicker"><!--fbq:kicker-->{{KICKER}}<!--/fbq:kicker--></p>
+  <h1><!--fbq:h1-->{{H1}}<!--/fbq:h1--> — <span class="h1-count">질문 <span data-fb="total">0</span>건</span></h1>
+  <div class="lead"><!--fbq:lead-->{{LEAD_HTML}}<!--/fbq:lead--></div>
+  <div class="progress" data-fb-progress role="progressbar" aria-label="답변 진행">
+    <div class="progress-bar"></div>
+    <div class="progress-txt">답변 <b data-fb="done">0</b> / <span data-fb="total">0</span> · 남은 <span data-fb="left">0</span>건<span class="fb-breakdown" data-fb="breakdown"></span></div>
+  </div>
+</header>
+
+<section class="howto" id="how" aria-labelledby="how-h">
+  <h2 id="how-h">답하는 법</h2>
+  <ol>
+    <li><b>질문을 읽습니다</b>카드마다 질문 한 줄, 왜 묻는가, 선택지와 「고르면」 결과, 추천과 대가가 모두 펼쳐져 있습니다. 그림이나 직접 써 보는 시안이 있으면 눌러 보며 비교하세요.</li>
+    <li><b>고르고 적습니다</b>추천을 채택하거나 다른 선택지를 고르고, 하실 말씀은 메모 칸에 적습니다(여러 줄 가능). 같은 버튼을 다시 누르면 취소됩니다.</li>
+    <li><b>「답변 완료」를 누릅니다</b>위쪽에 「자비스 대기 중」이 보이면 누르시는 즉시 제가 받아 처리합니다. 「자비스 연결 없음」이 보이면 「결과 복사」 후 대화창에 붙여 넣어 주세요.</li>
+  </ol>
+  <p class="howto-note">고른 내용은 이 브라우저에도 저장돼, 페이지를 다시 열어도 남아 있습니다.</p>
+</section>
+
+<section id="decisions" aria-labelledby="dec-h">
+  <h2 id="dec-h" class="sr-only"><span data-fb="round">{{ROUND}}</span>회차 질문</h2>
+<!--fbq:cards-->
+{{CARDS_HTML}}
+<!--/fbq:cards-->
+</section>
+
+<div class="rounds" id="rounds" aria-label="이전 회차 — 반영됨"><!--fbq:rounds-->{{ROUNDS_HTML}}<!--/fbq:rounds--></div>
+
+</main>
+
+<div class="toast" id="fb-toast" role="status" aria-live="polite"></div>
+
+<script id="fbq-core-js">
+/* =====================================================================
+   질문 페이지 공통 스크립트 (fbq-core-js) — dz-feedback-review
+   · 페이지마다 고치지 않는다. ES5 문법, 외부 라이브러리 없음.
+   · 저장: localStorage 'dzfb:' + body[data-fb-key]. 접근은 모두 try/catch, 손상 값은 버린다.
+   · 카드: .dec[data-id][data-title][data-options][data-rec] — 수·회차는 DOM 에서 센다
+   · 버튼: [data-fb-act="filter|copy|submit|reset"] · 자리: [data-fb="done|total|left|breakdown|round"]
+   · 시안: figure.demo[data-src][data-h][data-missing] — iframe 은 여기서 sandbox 를 먼저 걸고 만든다
+   ===================================================================== */
+(function () {
+  'use strict';
+  var doc = document;
+  var body = doc.body;
+  if (!body) { return; }
+
+  var CIRC = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
+  var SANDBOX = 'allow-scripts allow-forms allow-modals allow-popups';
+  var T = {
+    none: '미결정', modify: '수정', hold: '보류',
+    adopt: ' 채택(추천)', adoptShort: ' 채택', pick: ' 선택',
+    memo: '메모 (고른 이유·고칠 점·지시 사항 — 여러 줄 가능)',
+    chipWait: '연결 확인 중',
+    chipOn: '자비스 대기 중 — 답을 마치면 「답변 완료」',
+    chipOff: '자비스 연결 없음 — 결과 복사로 보내 주세요',
+    chipSent: '자비스에게 보냈습니다 — 대화창으로 돌아가 보세요',
+    copied: '결과를 복사했습니다 — 대화창에 붙여 넣어 주세요',
+    manual: '자동 복사가 막혔습니다. 아래 글을 모두 골라 복사해 주세요(이미 골라 두었습니다).',
+    close: '닫기',
+    notLinked: '이 페이지는 자비스와 연결돼 있지 않습니다. 「결과 복사」 후 대화창에 붙여 넣어 주세요.',
+    askLeft: function (n) { return '아직 고르지 않은 질문이 ' + n + '개 있습니다. 이대로 보낼까요?'; },
+    sending: '보내는 중',
+    sentBtn: '보냈습니다',
+    sentToast: '자비스에게 보냈습니다 — 대화창으로 돌아가 보세요',
+    sendFail: function (s) { return '보내지 못했습니다(' + s + '). 「결과 복사」 후 대화창에 붙여 넣어 주세요.'; },
+    netFail: '자비스가 대기 중이 아닙니다. 「결과 복사」 후 대화창에 붙여 넣어 주세요.',
+    resetAsk: '이 페이지에서 고른 답과 메모를 모두 지울까요?\n(이 브라우저에 저장된 것만 지워집니다)',
+    resetDone: '초기화했습니다',
+    filterOn: function (n) { return '미결정 카드만 보입니다 — 남은 ' + n + '건'; },
+    filterNone: '미결정 카드가 없습니다 — 모두 고르셨습니다',
+    filterOff: '모든 카드를 보입니다',
+    demoOpen: '새 창으로 크게 보기',
+    demoRec: '추천',
+    demoMissing: '시안 파일을 찾을 수 없습니다: ',
+    demoBad: '시안 경로가 올바르지 않습니다(페이지 폴더 기준 상대 경로만): ',
+    demoNote: '시안 안을 직접 눌러 보고 써 보세요. 아래 띠의 오른쪽 모서리를 끌면 높이가 바뀝니다. 시안은 이 칸에서도, 「새 창으로 크게 보기」로 연 창에서도 이 페이지에 저장된 답에 손댈 수 없습니다.',
+    fullTitle: '시안 크게 보기',
+    kinds: { 'st-adopt': '채택', 'st-pick': '선택', 'st-modify': '수정', 'st-hold': '보류' }
+  };
+  function warn(msg) { if (window.console && console.warn) { console.warn('[질문 페이지] ' + msg); } }
+
+  /* ---------- 도우미 ---------- */
+  function toArr(list) { return Array.prototype.slice.call(list || []); }
+  function $all(sel, root) { return toArr((root || doc).querySelectorAll(sel)); }
+  function circ(n) { return (n >= 1 && n <= 20) ? CIRC.charAt(n - 1) : '(' + n + ')'; }
+  function clean(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, ''); }
+  function el(tag, cls, text) {
+    var e = doc.createElement(tag);
+    if (cls) { e.className = cls; }
+    if (text != null) { e.textContent = text; }
+    return e;
+  }
+  function setText(sel, val) { $all(sel).forEach(function (e) { e.textContent = String(val); }); }
+  // 맨 앞 원문자(①~⑳)는 span.ci 로 감싸 크게 그린다
+  function setLabel(node, text) {
+    node.textContent = '';
+    var s = String(text);
+    var c0 = s.charAt(0);
+    if (c0 && CIRC.indexOf(c0) >= 0) {
+      node.appendChild(el('span', 'ci', c0));
+      node.appendChild(doc.createTextNode(s.slice(1)));
+    } else {
+      node.textContent = s;
+    }
+  }
+  var toastTimer = null;
+  function toast(msg) {
+    var t = doc.getElementById('fb-toast');
+    if (!t) { return; }
+    t.textContent = msg;
+    t.classList.add('show');
+    if (toastTimer) { clearTimeout(toastTimer); }
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 3600);
+  }
+
+  /* ---------- 시안 크게 보기 — 「새 창으로 크게 보기」가 연 창(주소 #full=시안경로&c=카드번호&n=선택지번호) ---------- */
+  // 시안 파일을 직접 열면 sandbox 밖(질문 페이지와 같은 출처)이 되므로, 이 페이지가 sandbox iframe 하나만 그린다
+  var fullM = /^#full=([^&]*)(?:&(.*))?$/.exec(location.hash || '');
+  if (fullM) { fullView(fullM[1], fullM[2] || ''); return; }
+  function hashArg(rest, k) {
+    var m = new RegExp('(?:^|&)' + k + '=([^&]*)').exec(rest);
+    if (!m) { return ''; }
+    try { return decodeURIComponent(m[1]); } catch (e) { return ''; }
+  }
+  // 카드를 지우기 전에, 이 시안이 어느 카드의 몇 번 선택지인지 읽는다(번호·이름은 글자로만 쓰고 선택자에 넣지 않는다)
+  function fullLabel(src, cid, n) {
+    var cards = $all('.dec[data-id]');
+    var card = null;
+    var fig = null;
+    var i;
+    for (i = 0; i < cards.length && !card; i++) { if (cid && clean(cards[i].getAttribute('data-id')) === cid) { card = cards[i]; } }
+    if (card && n) {
+      $all('figure.demo', card).forEach(function (f) {
+        if (!fig && parseInt(f.getAttribute('data-n'), 10) === n && clean(f.getAttribute('data-src')) === src) { fig = f; }   // 보이는 파일과 이름이 늘 맞게
+      });
+    }
+    if (!fig) {   // 번호가 없거나 맞지 않으면 경로가 같은 첫 시안으로 대신
+      $all(card ? 'figure.demo' : '.dec figure.demo', card || doc).forEach(function (f) { if (!fig && clean(f.getAttribute('data-src')) === src) { fig = f; } });
+    }
+    if (fig && !card) {
+      for (var p = fig.parentNode; p && p.getAttribute; p = p.parentNode) {
+        if (p.getAttribute('data-id') !== null && /(^|\s)dec(\s|$)/.test(p.className || '')) { card = p; break; }
+      }
+    }
+    if (!fig) { return null; }
+    var fn = parseInt(fig.getAttribute('data-n'), 10) || 0;
+    var tEl = fig.querySelector('.demo-t');
+    var opt = (fn ? circ(fn) + ' ' : '') + (tEl ? clean(tEl.textContent) : '');
+    var head = '';
+    if (card) {
+      var ct = card.querySelector('.dec-t');
+      head = clean(card.getAttribute('data-id')) + ' ' + (clean(card.getAttribute('data-title')) || (ct ? clean(ct.textContent) : ''));
+    }
+    return { card: clean(head), opt: clean(opt) };
+  }
+  function fullView(raw, rest) {
+    var src = '';
+    try { src = decodeURIComponent(raw); } catch (e) { src = ''; }
+    var nn = parseInt(hashArg(rest, 'n'), 10);
+    var lab = src ? fullLabel(src, clean(hashArg(rest, 'c')), nn >= 1 ? nn : 0) : null;
+    body.className = 'fb-full';
+    body.innerHTML = '';
+    var bar = el('div', 'full-bar');
+    var head = lab ? (lab.card ? lab.card + ' — ' : '') + (lab.opt || T.fullTitle) : T.fullTitle;
+    bar.appendChild(el('b', 'full-t', head));
+    bar.appendChild(el('span', 'full-src', (lab ? T.fullTitle + ' · ' : '') + src));
+    body.appendChild(bar);
+    // 탭 제목은 잘려도 구분되게 선택지 번호·이름을 앞에
+    var tabT = lab && lab.opt ? lab.opt + (lab.card ? ' — ' + lab.card : '') : T.fullTitle + ' — ' + src;
+    try { doc.title = tabT; } catch (e) { /* 무시 */ }
+    if (badSrc(src)) { body.appendChild(el('p', 'demo-missing full-msg', T.demoBad + (src || '(비어 있음)'))); return; }
+    var ifr = doc.createElement('iframe');
+    ifr.setAttribute('sandbox', SANDBOX);   // src 보다 먼저
+    ifr.setAttribute('title', tabT);
+    ifr.setAttribute('referrerpolicy', 'no-referrer');
+    ifr.className = 'full-frame';
+    ifr.src = src;
+    body.appendChild(ifr);
+  }
+
+  /* ---------- 페이지 정보 ---------- */
+  var ROUND = $all('details.round-done').length + 1;
+  var TITLE = clean(body.getAttribute('data-fb-title')) || clean(doc.title) || '질문 페이지';
+  if (/\{\{/.test(TITLE)) { warn('data-fb-title 이 채워지지 않았습니다'); }
+  var FB_KEY = clean(body.getAttribute('data-fb-key'));
+  if (!FB_KEY || /\{\{/.test(FB_KEY)) {
+    warn('data-fb-key 가 비었거나 채워지지 않아 파일 경로로 저장 키를 만듭니다');
+    FB_KEY = 'nokey' + location.pathname;
+  } else {
+    var km = /-r(\d+)$/.exec(FB_KEY);
+    if (km && +km[1] !== ROUND) { warn('저장 키 회차(-r' + km[1] + ')와 페이지 회차(' + ROUND + ')가 다릅니다'); }
+  }
+  var STORE = 'dzfb:' + FB_KEY;
+  try { doc.title = TITLE + ' — ' + ROUND + '회차 질문'; } catch (e) { /* 무시 */ }
+  if (!$all('details.round-done').length) {
+    $all('[data-fb-nav="rounds"]').forEach(function (a) { a.style.display = 'none'; });
+  }
+  var served = /^https?:$/.test(location.protocol);
+  var tokenM = /[?&]t=([^&#]+)/.exec(location.search);
+  var TOKEN = tokenM ? tokenM[1] : '';
+  try { TOKEN = decodeURIComponent(TOKEN); } catch (e) { /* 그대로 */ }
+
+  /* ---------- 저장소 ---------- */
+  function load() {
+    var obj = {};
+    try {
+      var raw = window.localStorage.getItem(STORE);
+      obj = raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+    if (!obj || typeof obj !== 'object' || obj instanceof Array) { return {}; }
+    var out = {};
+    for (var k in obj) {
+      if (!Object.prototype.hasOwnProperty.call(obj, k)) { continue; }
+      var v = obj[k];
+      if (!v || typeof v !== 'object' || v instanceof Array) { continue; }   // 문자열·숫자·배열·null 은 그 카드만 버린다
+      out[k] = {
+        choice: typeof v.choice === 'string' ? v.choice : '',
+        memo: typeof v.memo === 'string' ? v.memo : ''
+      };
+    }
+    return out;
+  }
+  function save() { try { window.localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) { /* 저장 불가 창 — 화면만 유지 */ } }
+  function clearStore() { try { window.localStorage.removeItem(STORE); } catch (e) { /* 무시 */ } }
+  var state = load();
+
+  /* ---------- 카드 ---------- */
+  var info = {};
+  var order = [];
+  $all('.dec[data-id]').forEach(setup);
+
+  function setup(card) {
+    var id = clean(card.getAttribute('data-id'));
+    if (!id) { return; }
+    if (info[id]) { warn('카드 번호가 겹칩니다: ' + id); return; }
+    var tEl = card.querySelector('.dec-t');
+    var title = clean(card.getAttribute('data-title')) || (tEl ? clean(tEl.textContent) : id);
+    var lis = $all('ol.opts > li', card);
+    var nOpt = parseInt(card.getAttribute('data-options'), 10);
+    if (!(nOpt >= 0)) { nOpt = lis.length; }
+    if (lis.length && lis.length !== nOpt) { warn(id + ' 선택지 수 불일치: data-options=' + nOpt + ', 선택지=' + lis.length); }
+    var recRaw = card.getAttribute('data-rec');
+    var rec = parseInt(recRaw, 10);
+    if (!(rec >= 1 && rec <= nOpt)) {
+      if (recRaw && recRaw !== '0') { warn(id + ' data-rec=' + recRaw + ' 가 선택지 범위(1~' + nOpt + ') 밖입니다'); }
+      rec = 0;
+    }
+    if (!card.querySelector('.dec-sum')) { warn(id + ' 한 줄 요약(.dec-sum)이 없습니다'); }
+    if (!card.querySelector('.dec-why')) { warn(id + ' 왜 묻는가(.dec-why)가 없습니다'); }
+    if (!card.id) { card.id = 'dec-' + id; }
+    lis.forEach(function (li, i) {
+      var n = parseInt(li.getAttribute('data-n'), 10);
+      if (!(n >= 1)) { n = i + 1; li.setAttribute('data-n', String(n)); }
+      li.classList.toggle('is-rec', n === rec);
+    });
+
+    var head = card.querySelector('.dec-h') || card;
+    var pill = head.querySelector('.fb-pill');
+    if (!pill) { pill = el('span', 'fb-pill'); head.appendChild(pill); }
+
+    var box = card.querySelector('.decide');
+    if (!box) { box = el('div', 'decide'); card.appendChild(box); }
+    box.innerHTML = '';
+    box.appendChild(el('span', 'lab', '결정'));
+    var grp = el('div', 'fb-btns');
+    grp.setAttribute('role', 'group');
+    grp.setAttribute('aria-label', id + ' 결정');
+    var btns = [];
+    var n;
+    if (rec) { btns.push(addBtn(grp, 'n' + rec, circ(rec) + T.adopt, ' is-recbtn')); }   // 추천 채택이 맨 앞
+    for (n = 1; n <= nOpt; n++) { if (n !== rec) { btns.push(addBtn(grp, 'n' + n, circ(n) + T.pick, ' is-pickbtn')); } }
+    btns.push(addBtn(grp, 'modify', T.modify, ''));
+    btns.push(addBtn(grp, 'hold', T.hold, ''));
+    box.appendChild(grp);
+
+    var memo = doc.createElement('textarea');
+    memo.className = 'memo';
+    memo.rows = 1;
+    memo.placeholder = T.memo;
+    memo.setAttribute('aria-label', id + ' 메모');
+    memo.value = state[id] ? state[id].memo : '';
+    box.appendChild(memo);
+
+    var c = { id: id, card: card, title: title, nOpt: nOpt, rec: rec, lis: lis, pill: pill, btns: btns, memo: memo, demos: [] };
+    info[id] = c;
+    order.push(id);
+
+    grp.addEventListener('click', function (ev) {
+      var b = ev.target && ev.target.closest ? ev.target.closest('.opt') : null;
+      if (b) { pick(id, b.getAttribute('data-v')); }
+    });
+    memo.addEventListener('input', function () {
+      var cur = state[id] || { choice: '', memo: '' };
+      cur.memo = memo.value;
+      put(id, cur);
+      grow(memo);
+      keep(id);
+      paintAll();
+    });
+
+    // 시안 — 나란히 놓인 묶음(.demos)은 개수만큼 열을 나눈다
+    $all('.demos', card).forEach(function (d) {
+      var k = $all('figure.demo', d).length;
+      if (k >= 2) { d.classList.add(k >= 3 ? 'cols-3' : 'cols-2'); }
+      if (!d.querySelector('.demo-note')) { d.appendChild(el('p', 'demo-note', T.demoNote)); }   // 묶음 안 맨 아래, 열 전체 폭
+    });
+    $all('figure.demo', card).forEach(function (fig) { setupDemo(fig, c); });
+  }
+
+  function addBtn(grp, v, text, extra) {
+    var b = el('button', 'opt' + extra);
+    setLabel(b, text);
+    b.type = 'button';
+    b.setAttribute('data-v', v);
+    b.setAttribute('aria-pressed', 'false');
+    grp.appendChild(b);
+    return b;
+  }
+
+  /* ---------- 시안 ---------- */
+  // 페이지 폴더 기준 상대 경로만 — 주소(http: 등)·절대 경로·..(%2e%2e 처럼 인코딩한 것 포함)·역슬래시는 거부.
+  // 공백·탭·줄바꿈·제어 문자는 위치와 상관없이 거부한다 — 브라우저는 주소를 읽을 때 앞뒤 공백과 탭·줄바꿈을 지우므로
+  // 「 //다른곳」·「ht<탭>tp:」 같은 값이 아래 검사를 비켜 외부 주소로 열린다
+  function badSrc(src) {
+    if (!src) { return true; }
+    var dec;
+    try { dec = decodeURIComponent(String(src).split('#')[0].split('?')[0]); } catch (e) { return true; }
+    if (/[\u0000-\u0020\u007F]/.test(src) || /[\u0000-\u0020\u007F]/.test(dec)) { return true; }
+    return /^[a-z][a-z0-9+.\-]*:/i.test(src) || /^[a-z][a-z0-9+.\-]*:/i.test(dec) || /^[\/\\]/.test(src) || /^[\/\\]/.test(dec) ||
+      /(^|[\/\\])\.\.([\/\\]|$)/.test(src) || /(^|[\/\\])\.\.([\/\\]|$)/.test(dec) || /[\\\u0000]/.test(dec);
+  }
+  function showMissing(fig, msg) {
+    $all('.demo-frame, .demo-missing', fig).forEach(function (x) { x.parentNode.removeChild(x); });
+    $all('.demo-open', fig).forEach(function (x) { x.parentNode.removeChild(x); });
+    fig.classList.add('is-missing');
+    fig.appendChild(el('p', 'demo-missing', msg));
+  }
+  function setupDemo(fig, c) {
+    var src = clean(fig.getAttribute('data-src'));
+    var n = parseInt(fig.getAttribute('data-n'), 10) || 0;
+    c.demos.push({ fig: fig, n: n });
+    var cap = fig.querySelector('figcaption');
+    if (!cap) { cap = el('figcaption'); fig.insertBefore(cap, fig.firstChild); }
+    if (n && n === c.rec) {
+      fig.classList.add('is-rec');
+      if (!cap.querySelector('.demo-rec')) { cap.appendChild(el('span', 'demo-rec', T.demoRec)); }
+    }
+    if (badSrc(src)) { showMissing(fig, T.demoBad + (src || '(비어 있음)')); return; }
+    if (fig.getAttribute('data-missing') === '1') { showMissing(fig, T.demoMissing + src); return; }
+
+    var tEl = fig.querySelector('.demo-t');
+    var name = tEl ? clean(tEl.textContent) : '';
+    if (!cap.querySelector('.demo-open')) {
+      var a = el('a', 'demo-open', T.demoOpen);
+      // 이 페이지의 크게 보기 모드(sandbox 유지) — 카드 번호·선택지 번호를 함께 넘겨 그 창 머리에 「R1-1 제목 — ② 이름」을 쓴다
+      a.href = location.href.split('#')[0].split('?')[0] + '#full=' + encodeURIComponent(src) +
+        '&c=' + encodeURIComponent(c.id) + (n ? '&n=' + n : '');
+      a.target = '_blank';
+      a.rel = 'noopener';
+      cap.appendChild(a);
+    }
+    var h = parseInt(fig.getAttribute('data-h'), 10);
+    if (!(h >= 120 && h <= 3000)) { h = 420; }
+    var frame = fig.querySelector('.demo-frame');
+    if (!frame) { frame = el('div', 'demo-frame'); fig.appendChild(frame); }
+    frame.style.height = (h + 12) + 'px';   // 12px = 아래 끌기 띠
+    var old = frame.querySelector('iframe') || fig.querySelector('iframe');
+    if (old && old.getAttribute('sandbox') === SANDBOX && old.parentNode === frame) { return; }
+    if (old) { warn((c.id) + ' 시안 iframe 을 sandbox 를 건 새 iframe 으로 바꿉니다'); old.parentNode.removeChild(old); }
+    var ifr = doc.createElement('iframe');
+    ifr.setAttribute('sandbox', SANDBOX);   // src 보다 먼저 — 같은 출처 권한 없이(저장값 접근 불가)
+    ifr.setAttribute('title', '시안 ' + (n || '') + (name ? ' — ' + name : ''));
+    ifr.setAttribute('referrerpolicy', 'no-referrer');
+    ifr.src = src;
+    frame.appendChild(ifr);
+    if (served) {
+      // 창구로 열었을 때만 파일 유무를 직접 확인한다(파일로 연 페이지는 확인 불가 — 생성기의 data-missing 을 따른다)
+      try {
+        var x = new XMLHttpRequest();
+        x.open('GET', src, true);
+        x.onload = function () { if (x.status >= 400) { showMissing(fig, T.demoMissing + src); } };
+        x.send();
+      } catch (e) { /* 확인 못 하면 그대로 둔다 */ }
+    }
+  }
+
+  /* ---------- 상태 ---------- */
+  function put(id, cur) {
+    if (!cur.choice && !cur.memo) { delete state[id]; } else { state[id] = cur; }
+    save();
+  }
+  function choiceOf(id) {
+    var c = info[id];
+    var s = state[id];
+    if (!c || !s || !s.choice) { return ''; }
+    var v = s.choice;
+    if (v === 'modify' || v === 'hold') { return v; }
+    var m = /^n(\d+)$/.exec(v);
+    if (m && +m[1] >= 1 && +m[1] <= c.nOpt) { return v; }
+    return '';
+  }
+  function memoOf(id) { return state[id] ? String(state[id].memo || '').replace(/\s+$/, '') : ''; }
+  function pick(id, v) {
+    var cur = state[id] || { choice: '', memo: '' };
+    cur.choice = (choiceOf(id) === v) ? '' : v;   // 다시 누르면 해제
+    put(id, cur);
+    keep(id);
+    paint(id);
+    paintAll();
+    if (cur.choice === 'modify' && !memoOf(id)) { try { info[id].memo.focus(); } catch (e) { /* 무시 */ } }
+  }
+  function status(id) {
+    var ch = choiceOf(id);
+    if (!ch) { return { cls: 'st-none', text: T.none }; }
+    if (ch === 'modify') { return { cls: 'st-modify', text: T.modify }; }
+    if (ch === 'hold') { return { cls: 'st-hold', text: T.hold }; }
+    var n = +ch.slice(1);
+    return n === info[id].rec ? { cls: 'st-adopt', text: circ(n) + T.adoptShort } : { cls: 'st-pick', text: circ(n) + T.pick };
+  }
+  function label(id) {
+    var ch = choiceOf(id);
+    if (!ch) { return T.none; }
+    if (ch === 'modify') { return T.modify; }
+    if (ch === 'hold') { return T.hold; }
+    var n = +ch.slice(1);
+    return circ(n) + (n === info[id].rec ? T.adopt : T.pick);
+  }
+  function counts() {
+    var k = { total: order.length, decided: 0, left: 0 };
+    order.forEach(function (id) { if (choiceOf(id)) { k.decided++; } });
+    k.left = k.total - k.decided;
+    return k;
+  }
+
+  /* ---------- 결과 ---------- */
+  function resultText() {
+    var k = counts();
+    var lines = ['[결정 결과] ' + TITLE + ' — ' + ROUND + '회차 — 결정 ' + k.decided + '/' + k.total];
+    order.forEach(function (id) {
+      var line = id + ' ' + info[id].title + ' — ' + label(id);
+      var m = memoOf(id);
+      if (m) { line += ' / 메모: ' + m.replace(/\r\n?/g, '\n').replace(/\n/g, '\n    '); }
+      lines.push(line);
+    });
+    return lines.join('\n');
+  }
+  function answers() {
+    return order.map(function (id) {
+      var ch = choiceOf(id);
+      var n = /^n\d+$/.test(ch) ? +ch.slice(1) : 0;
+      return {
+        id: id, title: info[id].title,
+        choice: n ? String(n) : (ch || 'none'),
+        choiceLabel: label(id),
+        adopted: !!(n && n === info[id].rec),
+        rec: info[id].rec,
+        memo: memoOf(id)
+      };
+    });
+  }
+
+  /* ---------- 그리기 ---------- */
+  function grow(ta) {
+    if (!ta || !ta.offsetWidth) { return; }   // 숨은 카드는 보일 때 다시 잰다
+    ta.style.height = 'auto';
+    ta.style.height = (ta.scrollHeight + 2) + 'px';   // 2 = 위아래 테두리
+  }
+  function growAll() { order.forEach(function (id) { grow(info[id].memo); }); }
+  function paint(id) {
+    var c = info[id];
+    var ch = choiceOf(id);
+    var st = status(id);
+    c.card.classList.toggle('is-decided', !!ch);
+    c.btns.forEach(function (b) {
+      var on = b.getAttribute('data-v') === ch;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    c.lis.forEach(function (li) { li.classList.toggle('is-picked', !!ch && ('n' + li.getAttribute('data-n')) === ch); });
+    c.demos.forEach(function (d) { d.fig.classList.toggle('is-picked', !!ch && ('n' + d.n) === ch); });
+    c.pill.className = 'fb-pill ' + st.cls;
+    setLabel(c.pill, st.text);
+    $all('.progress-bar .seg').forEach(function (s) {
+      if (s.getAttribute('data-for') === id) { s.className = 'seg ' + st.cls; s.setAttribute('aria-label', id + ' ' + st.text); }
+    });
+  }
+  function paintAll() {
+    var k = counts();
+    var pct = k.total ? Math.round(k.decided / k.total * 100) : 0;
+    setText('[data-fb="done"]', k.decided);
+    setText('[data-fb="total"]', k.total);
+    setText('[data-fb="left"]', k.left);
+    setText('[data-fb="round"]', ROUND);
+    var by = {};
+    var parts = [];
+    order.forEach(function (id) { var s = status(id).cls; by[s] = (by[s] || 0) + 1; });
+    ['st-adopt', 'st-pick', 'st-modify', 'st-hold'].forEach(function (s) { if (by[s]) { parts.push(T.kinds[s] + ' ' + by[s]); } });
+    setText('[data-fb="breakdown"]', parts.join(' · '));
+    $all('.progress-fill').forEach(function (f) { f.style.width = pct + '%'; });
+    $all('[data-fb-progress]').forEach(function (p) {
+      p.setAttribute('aria-valuemin', '0');
+      p.setAttribute('aria-valuemax', String(k.total));
+      p.setAttribute('aria-valuenow', String(k.decided));
+      p.setAttribute('aria-valuetext', '답변 ' + k.decided + ' / ' + k.total);
+    });
+  }
+  function buildSegments() {
+    $all('.progress-bar').forEach(function (bar) {
+      bar.innerHTML = '';
+      order.forEach(function (id) {
+        var a = el('a', 'seg');
+        a.href = '#' + info[id].card.id;
+        a.title = id + ' ' + info[id].title;
+        a.setAttribute('data-for', id);
+        bar.appendChild(a);
+      });
+    });
+  }
+
+  /* ---------- 미결정만 보기 ---------- */
+  function keep(id) { if (body.classList.contains('fb-only-open')) { info[id].card.classList.add('fb-keep'); } }
+  function setFilter(on) {
+    body.classList.toggle('fb-only-open', on);
+    $all('.dec.fb-keep').forEach(function (c) { c.classList.remove('fb-keep'); });
+    $all('[data-fb-act="filter"]').forEach(function (b) { b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+    growAll();
+  }
+
+  /* ---------- 복사 ---------- */
+  function manualBox(text) {
+    var old = doc.querySelector('.fb-manual');
+    if (old) { old.parentNode.removeChild(old); }
+    var box = el('div', 'fb-manual');
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-label', '결과 직접 복사');
+    box.appendChild(el('p', '', T.manual));
+    var ta = el('textarea');
+    ta.readOnly = true;
+    ta.value = text;
+    box.appendChild(ta);
+    var b = el('button', 'btn', T.close);
+    b.type = 'button';
+    b.addEventListener('click', function () { box.parentNode.removeChild(box); });
+    box.appendChild(b);
+    body.appendChild(box);
+    try { ta.focus(); ta.select(); } catch (e) { /* 무시 */ }
+  }
+  function copyFallback(text) {
+    var ok = false;
+    var ta = el('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    ta.style.left = '0';
+    ta.style.opacity = '0';
+    body.appendChild(ta);
+    try { ta.select(); ok = doc.execCommand('copy'); } catch (e) { ok = false; }
+    body.removeChild(ta);
+    if (ok) { toast(T.copied); } else { manualBox(text); }
+  }
+  function copyText(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { toast(T.copied); }, function () { copyFallback(text); });
+        return;
+      }
+    } catch (e) { /* 아래 폴백 */ }
+    copyFallback(text);
+  }
+
+  /* ---------- 자비스 연결 ---------- */
+  var chip = doc.getElementById('fb-link');
+  var sent = false;
+  function setChip(st) {
+    if (!chip) { return; }
+    var txt = { wait: T.chipWait, on: T.chipOn, off: T.chipOff, sent: T.chipSent }[st] || T.chipWait;
+    chip.setAttribute('data-state', st);
+    chip.textContent = txt;
+  }
+  function ping() {
+    if (!served || !TOKEN) { setChip('off'); return; }
+    try {
+      var x = new XMLHttpRequest();
+      x.open('GET', '/ping?t=' + encodeURIComponent(TOKEN), true);   // 창구는 토큰이 맞을 때만 200 — 예전 창구의 탭이면 「연결 없음」
+      x.onload = function () { if (!sent) { setChip(x.status === 200 ? 'on' : 'off'); } };
+      x.onerror = function () { if (!sent) { setChip('off'); } };
+      x.send();
+    } catch (e) { setChip('off'); }
+  }
+  function submitBtns() { return $all('[data-fb-act="submit"]'); }
+  function submit() {
+    if (sent) { return; }
+    if (!served || !TOKEN) { setChip('off'); toast(T.notLinked); return; }
+    var k = counts();
+    if (k.left > 0 && !window.confirm(T.askLeft(k.left))) { return; }
+    var payload = JSON.stringify({
+      token: TOKEN, text: resultText(), counts: k, round: ROUND, fbKey: FB_KEY, title: TITLE, answers: answers()
+    });
+    var bs = submitBtns();
+    bs.forEach(function (b) { b.disabled = true; b.setAttribute('data-label', b.textContent); b.textContent = T.sending; });
+    function restore() { bs.forEach(function (b) { b.disabled = false; b.textContent = b.getAttribute('data-label') || '답변 완료'; }); }
+    try {
+      var r = new XMLHttpRequest();
+      r.open('POST', '/answer', true);
+      r.setRequestHeader('Content-Type', 'text/plain;charset=UTF-8');
+      r.onload = function () {
+        if (r.status === 200) {
+          sent = true;
+          bs.forEach(function (b) { b.textContent = T.sentBtn; });
+          setChip('sent');
+          toast(T.sentToast);
+        } else {
+          restore();
+          toast(T.sendFail(r.status));
+        }
+      };
+      r.onerror = function () { restore(); setChip('off'); toast(T.netFail); };
+      r.send(payload);
+    } catch (e) { restore(); setChip('off'); toast(T.netFail); }
+  }
+
+  /* ---------- 버튼 ---------- */
+  doc.addEventListener('click', function (ev) {
+    var b = ev.target && ev.target.closest ? ev.target.closest('[data-fb-act]') : null;
+    if (!b) { return; }
+    var act = b.getAttribute('data-fb-act');
+    if (act === 'copy') { copyText(resultText()); }
+    else if (act === 'submit') { submit(); }
+    else if (act === 'filter') {
+      var on = !body.classList.contains('fb-only-open');
+      setFilter(on);
+      var k = counts();
+      toast(on ? (k.left ? T.filterOn(k.left) : T.filterNone) : T.filterOff);
+    } else if (act === 'reset') {
+      if (!window.confirm(T.resetAsk)) { return; }
+      state = {};
+      clearStore();
+      setFilter(false);
+      order.forEach(function (id) { info[id].memo.value = ''; paint(id); });
+      growAll();
+      paintAll();
+      toast(T.resetDone);
+    }
+  });
+  var rT = null;
+  window.addEventListener('resize', function () { if (rT) { clearTimeout(rT); } rT = setTimeout(growAll, 120); });
+
+  /* ---------- 시작 ---------- */
+  buildSegments();
+  order.forEach(paint);
+  paintAll();
+  growAll();
+  setChip('wait');
+  ping();
+
+  window.DZFB = { text: resultText, counts: counts, answers: answers, round: ROUND, key: STORE };
+})();
+</script>
+</body>
+</html>
