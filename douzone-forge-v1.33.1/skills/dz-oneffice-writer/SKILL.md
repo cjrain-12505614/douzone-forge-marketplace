@@ -10,7 +10,7 @@ description: >
   담당한다. 이 스킬은 외부 워크스페이스/메모리 파일에 의존하지 않는다. 단, 원피스
   DOM 배관(중첩 iframe 진입·편집모드 판정/전환·주입·정렬·저장 등)은 플러그인 내부
   정본 dz-oneffice-kit(OF 라이브러리)를 사용한다.
-version: 0.7.0
+version: 0.7.1
 ---
 
 # 원피스 쓰기 (ONEFFICE Writer)
@@ -74,6 +74,7 @@ PDF 출력은 서버 렌더라 지연 지정과 무관하게 이미지가 모두
 **생성 후 편집기를 크롬으로 항상 연다** — `editorUrl` 을 브라우저로 열어 사용자가 결과를 바로 보게 한다.
 ⚠️ **추가 검증(스크린샷 판독·본문 재조회)은 매번 하지 않는다** — 생성 API가 저장까지 확정하므로 불필요
 (2026-07-22 차민수 수석 지시). 사용자가 요청하거나 이상 징후가 있을 때만 검증한다.
+이 생략은 **발행 후 저장 확인**에 한한다. 발행 **전** 본문 HTML을 렌더해 보고 `dz-frontend-design` §8 점검을 하는 것은 별개다.
 
 **아래 DOM 주입 절차(이 스킬 본문 전체)는 다음 폴백·재편집 용도로 유지한다:**
 
@@ -208,7 +209,7 @@ PDF 출력은 서버 렌더라 지연 지정과 무관하게 이미지가 모두
 > | **인쇄·PDF 변환·줌 변경에 사이즈 정상** (보고서·외부 공유) | **모드 C (평면)** ★ |
 > | 편집 화면 미관 우선 + 외부 공유·인쇄 없음 | 모드 B (컨테이너 보존) |
 > | 짧은 메모·서식 없는 단순 문서 | 모드 C |
-> | 컨테이너 디자인 (그라데이션·카드·shadow) 편집 화면 한정 필수 | 모드 B |
+> | `<style>` 선택자·의사요소 없이는 표현할 수 없는 시각 요소가 편집 화면에서 꼭 필요 | 모드 B |
 >
 > 사용자가 인쇄·PDF·외부 공유 의도를 명시하면 **모드 C 가 기본**. 모드 B 는 편집 화면
 > 한정 미관이 필요할 때만 선택.
@@ -285,6 +286,7 @@ PDF 출력은 서버 렌더라 지연 지정과 무관하게 이미지가 모두
    `규칙/프로세스/템플릿/회의록-인포그래픽-패턴.html`(forge)
    (`규칙/프로세스/회의록-원피스-템플릿-표준.md` §7) 참고. 회의록은 6종 템플릿 생성기
    (`규칙/프로세스/템플릿/회의록/`)가 인포그래픽을 데이터에서 계산해 그린다(공통 부품 `mt/common.py`).
+   인포그래픽 안의 작은 글자도 **얹히는 바탕과의 대비 4.5 이상**이어야 한다. 패턴 파일의 색을 그대로 옮기지 말고 대비를 계산해 확인한다.
 4. **적용 경계** — md(작업 기록) 작성 단계에서는 이 원칙에 얽매이지 않는다.
    **HTML을 만들기 시작하는 순간부터 원피스 주입 완료까지**만 적용한다.
 
@@ -595,14 +597,14 @@ socketserver.TCPServer(('127.0.0.1', 8765), H).serve_forever()
 > `await fetch('http://127.0.0.1:8765/...')` 로 받아 `OF.injectHTML(text, 'B')` 에 넘긴다.
 > 아래 각 모드 스니펫은 폴백 사본.
 
-#### 모드 B. 컨테이너 보존 주입 (★ 권장, 기본)
+#### 모드 B. 컨테이너 보존 주입 (편집 화면 전용 — 기본은 모드 C, 위 「주입 모드 선택 가이드」)
 
 원본 HTML 의 `<style>` + `<div class="container">…</div>` 를 **통째로** main.innerHTML
 에 주입한다. main 직계 자식은 `[<style>, .container]` 2 개뿐이므로 dzeditor 가 블록
 단위로 정상 인식하며, `<style>` 안 `.container` CSS (shadow/padding/hero/section 등)
 가 전부 살아난다.
 
-**이번 세션(2026-04-15 로폼 5차 미팅 회의록)에서 최종 정답이었던 방식.**
+_(이력: 2026-04-15 로폼 5차 미팅 회의록에서 처음 정답으로 쓴 방식. 2026-05-27 인쇄·PDF 사이즈 문제로 모드 C가 기본이 됐다.)_
 
 ```javascript
 (async () => {
@@ -691,7 +693,7 @@ socketserver.TCPServer(('127.0.0.1', 8765), H).serve_forever()
 
 ```html
 <h1 style="font-size:18pt;font-weight:700;text-align:center;letter-spacing:0.4em;padding-bottom:10px;border-bottom:2px solid #1a1a1a;margin:0 0 8px 0;color:#1a1a1a;">회 의 록</h1>
-<p style="font-size:11pt;text-align:center;color:#555555;margin:0 0 24px 0;">부제 — 협의 안건</p>
+<p style="font-size:11pt;text-align:center;color:#555555;margin:0 0 24px 0;">협의 안건 한 줄</p>
 <table style="width:100%;border-collapse:collapse;margin:0 0 28px 0;font-size:11pt;">
   <tr>
     <th style="background:#f4f4f4;padding:7px 10px;border:1px solid #999;font-weight:600;width:90px;">일시</th>
@@ -739,7 +741,7 @@ socketserver.TCPServer(('127.0.0.1', 8765), H).serve_forever()
 | `!important` 사용 | 다수 | 0 |
 | `@media print` | 있음 | 없음 |
 | 인쇄·PDF·줌 변환 | **사이즈 문제 발생** | **정상** |
-| 편집 화면 디자인 | 컨테이너 미관 유지 | 본문 단정 (디자인 단순) |
+| 편집 화면 디자인 | `<style>` 클래스 규칙 그대로 | 인라인 스타일만으로 위계 표현 |
 
 ### Step 7. 꺾쇠 정렬 — zoom 보정 필수 (모드 B 한정, 모드 C 는 생략)
 

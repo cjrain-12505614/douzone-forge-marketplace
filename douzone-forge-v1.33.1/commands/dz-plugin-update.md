@@ -75,7 +75,9 @@ rc, out = run(["plugin", "marketplace", "update", mk])
 if rc != 0:
     print("결과=마켓받기실패 —", out[-600:]); sys.exit(4)
 
-t0 = time.strftime("%Y-%m-%d %H:%M:%S")
+# 앱 기록(맥)의 지금 크기 — 갱신 뒤에 새로 쓰인 부분만 본다
+LOG = os.path.expanduser("~/Library/Logs/Claude/main.log")
+log_pos = os.path.getsize(LOG) if os.path.isfile(LOG) else None
 args = ["plugin", "update", pid] + (["--scope", scope] if scope != "user" else [])
 rc, out = run(args)
 print(out[-400:])
@@ -106,13 +108,30 @@ if updated:
         print("  -", h[:160])
     if len(heads) > 10:
         print("  … 외 %d개(변경 이력 %s)" % (len(heads) - 10, cl))
-    log = os.path.expanduser("~/Library/Logs/Claude/main.log")
-    if os.path.isfile(log):
-        time.sleep(5)
-        hits = [l.rstrip() for l in open(log, encoding="utf-8", errors="replace") if "reload_plugins" in l and l[:19] >= t0]
-        print("앱 다시 불러오기 기록 %d줄 (이 시각 이후)" % len(hits))
-        for l in hits[:3]:
-            print("  ", l[:170])
+    if log_pos is not None:
+        # 앱은 설치 기록이 바뀌고 몇 초 뒤에 열린 세션을 다시 불러온다(2026-10-01 실측 6~7초) — 1초 간격으로 최대 15초 기다린다
+        def new_hits():
+            try:
+                with open(LOG, "rb") as f:
+                    f.seek(log_pos)
+                    tail = f.read().decode("utf-8", "replace")
+            except Exception:
+                return []
+            return [l.rstrip() for l in tail.splitlines() if "reload_plugins" in l]
+        hits = []
+        for _ in range(15):
+            time.sleep(1)
+            hits = new_hits()
+            if any("applied" in l for l in hits):
+                time.sleep(1)   # 같은 신호를 받은 나머지 세션 줄까지
+                hits = new_hits()
+                break
+        applied = [l for l in hits if "applied" in l]
+        if applied:
+            m_ap = re.search(r"applied for \S+: (.*)", applied[0])
+            print("앱 다시 불러오기: 세션 %d개에 적용(%s)" % (len(applied), (m_ap.group(1) if m_ap else "")[:80]))
+        else:
+            print("앱 다시 불러오기 기록 없음 — 15초 안에 기록이 없었습니다(데스크톱 앱을 쓰지 않는 터미널 환경이면 정상)")
 else:
     print("결과=이미최신 %s" % after)
 PYEOF
@@ -122,7 +141,7 @@ PYEOF
 
 | 출력 `결과=` | 뜻 | 사용자에게 |
 |---|---|---|
-| `갱신됨 A → B` | 새 판을 받았다 | 판 변화와 「바뀐 판」 제목을 그대로 보인다. **적용 시점**: 데스크톱 앱은 열린 세션에 새 판을 스스로 다시 불러온다 — 쉬는 세션은 바로, 이 대화처럼 돌고 있는 세션은 **이번 답변이 끝난 뒤**(2026-09-11 세 기기 실측). 명령줄 「Restart to apply」 문구는 명령줄 터미널 세션 기준이며, 터미널에서 쓰는 사람은 새 세션을 열거나 `/reload-plugins` 한다. 맥이면 「앱 다시 불러오기 기록」 줄 수로 반영을 확인할 수 있다(0줄이면 몇 초 뒤 앱 기록 `~/Library/Logs/Claude/main.log` 끝의 `reload_plugins` 줄을 다시 본다) |
+| `갱신됨 A → B` | 새 판을 받았다 | 판 변화와 「바뀐 판」 제목을 그대로 보인다. **적용 시점**: 데스크톱 앱은 열린 세션에 새 판을 스스로 다시 불러온다 — 쉬는 세션은 바로, 이 대화처럼 돌고 있는 세션은 **이번 답변이 끝난 뒤**(2026-09-11 세 기기 실측). 명령줄 「Restart to apply」 문구는 명령줄 터미널 세션 기준이며, 터미널에서 쓰는 사람은 새 세션을 열거나 `/reload-plugins` 한다. 맥이면 「앱 다시 불러오기: 세션 N개에 적용」 줄로 반영을 확인할 수 있다(명령이 최대 15초 기다린다). 「기록 없음」이면 앱 기록 `~/Library/Logs/Claude/main.log` 끝의 `reload_plugins` 줄을 직접 본다 |
 | `이미최신 X` | 마켓의 최신 판이 이미 깔려 있다 | 「이미 최신(X)」. 배포됐다고 들었는데 판이 그대로면 아직 마켓에 올라가지 않은 것이다 — 관리자(차민수 수석)에게 판 번호를 확인한다 |
 | `명령줄설치없음` (종료 3) | 앱(CoWork 모드)에서 설치한 환경 — 설치본이 앱 폴더에 따로 있다 | 앱의 플러그인 화면에서 douzone-forge 「업데이트」를 누르도록 안내한다(앱이 마켓 정보를 다시 받아야 켜지므로 시점은 앱에 달려 있다). ⛔ 여기서 `claude plugin install` 로 대신 깔지 않는다 — 설치본이 둘이 된다 |
 | `마켓받기실패` (종료 4) | 마켓(GitHub)을 받지 못했다 | 오류 끝부분을 그대로 보인다. 네트워크·GitHub 접속(사내망 차단 등)을 확인하고 잠시 뒤 다시 부른다 |

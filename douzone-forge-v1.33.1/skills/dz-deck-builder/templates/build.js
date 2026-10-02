@@ -37,17 +37,19 @@ function header(s, title){
 }
 // ─── 공통: 푸터 ───
 function footer(s, pg){
+  // 바닥글은 배경 광선(왼쪽 아래) 위에 놓이므로 dim·gray2는 대비 미달 — gray(#C2C8D6) 이상 (2026-10-02 실측, 발표자료-PPTX-작성-표준 §3 C3)
   s.addText("프로젝트 관리 기능 고도화 · 시장 분석", { x:X(64), y:X(692), w:X(500), h:X(20), margin:0,
-    fontFace:TEXT, fontSize:PT(11), color:C.dim, valign:"middle" });
+    fontFace:TEXT, fontSize:PT(11), color:C.gray, valign:"middle" });
   s.addText([
     { text:pg, options:{ fontFace:TITLE, bold:true, color:C.blue } },
-    { text:"  ·  2026.05.28", options:{ color:C.dim } }
+    { text:"  ·  2026.05.28", options:{ color:C.gray } }
   ], { x:X(916), y:X(692), w:X(300), h:X(20), margin:0, fontFace:TEXT, fontSize:PT(11), align:"right", valign:"middle" });
 }
 // ─── 공통: 중앙 타이틀 ───
+// eyebrow(제목 위 한 줄)는 선택 — EQT 원본의 가운데 제목에는 위 라벨이 없다(제목 아래 설명 문장만). 헤더띠에 없는 정보가 있을 때만 넘긴다.
 function centerTitle(s, eyebrow, runs){
-  s.addText(eyebrow.toUpperCase(), { x:X(64), y:X(108), w:X(1152), h:X(20), margin:0,
-    fontFace:TITLE, bold:true, fontSize:PT(11), color:C.blue, align:"center", charSpacing:3 });
+  if (eyebrow) s.addText(eyebrow, { x:X(64), y:X(108), w:X(1152), h:X(20), margin:0,
+    fontFace:TITLE, bold:true, fontSize:PT(11), color:C.blue, align:"center" });
   s.addText(runs, { x:X(64), y:X(132), w:X(1152), h:X(46), margin:0,
     fontFace:TITLE, bold:true, fontSize:PT(30), color:C.white, align:"center", valign:"middle" });
 }
@@ -67,7 +69,7 @@ function chipCard(s, x,y,w,h, chipText){
 // ─── 공통: 라벨 ───
 function lab(s, x,y,w, t, color){
   s.addText(t.toUpperCase(), { x:X(x), y:X(y), w:X(w), h:X(18), margin:0,
-    fontFace:TITLE, bold:true, fontSize:PT(11), color:color||C.dim, charSpacing:1.5, valign:"middle" });
+    fontFace:TITLE, bold:true, fontSize:PT(11), color:color||C.gray2, charSpacing:1.5, valign:"middle" });
 }
 // ─── 공통: 하단 강조 캡슐 ───
 function embar(s, y, runs){
@@ -86,7 +88,8 @@ function tbl(s, rows, x,y,w, colW, opt={}){
     border:{type:"solid", pt:0.5, color:C.tblLine}, fontFace:TEXT, fontSize:PT(12.5),
     color:C.gray, valign:"middle", autoPage:false, ...opt });
 }
-function th(t){ return { text:t.toUpperCase(), options:{ fill:{color:C.tblHead}, color:C.gray2, bold:true, fontFace:TITLE, fontSize:PT(10.5) } }; }
+// 표 머리는 쓴 그대로 둔다 — 대문자 변환은 EQT 원본 근거가 없다(원본 11쪽 표 머리는 한글, 2026-10-02 검증)
+function th(t){ return { text:t, options:{ fill:{color:C.tblHead}, color:C.gray2, bold:true, fontFace:TITLE, fontSize:PT(10.5) } }; }
 function td(t, o={}){ return { text:t, options:{ fill:{color:C.tblBase}, ...o } }; }
 function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } }; }
 
@@ -106,7 +109,7 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   s.addText("업무관리(KISS) · 차민수 (PM)", { x:X(74), y:X(468), w:X(700), h:X(26), margin:0,
     fontFace:TITLE, bold:true, fontSize:PT(15), color:C.white, charSpacing:1 });
   s.addText("2026.05", { x:X(74), y:X(496), w:X(400), h:X(22), margin:0,
-    fontFace:TEXT, fontSize:PT(14), color:C.gray2 });
+    fontFace:TEXT, fontSize:PT(14), color:C.white });   // 표지 아래쪽은 광선·글로우 위 — 흰색
   // 로고
   s.addShape(pres.shapes.RECTANGLE, { x:X(72), y:X(632), w:X(4), h:X(28), fill:{color:C.blue} });
   s.addText("DOUZONE", { x:X(86), y:X(630), w:X(300), h:X(32), margin:0,
@@ -116,7 +119,7 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   s.addText("● Confidential", { x:X(72), y:X(684), w:X(86), h:X(18), margin:0,
     fontFace:TITLE, bold:true, fontSize:PT(9), color:C.white, align:"center", valign:"middle" });
   s.addText("본 자료는 더존비즈온의 고유 자산이므로 무단 복사·인용·배포할 수 없으며 외부 유출 시 법적 책임을 질 수 있습니다.",
-    { x:X(168), y:X(684), w:X(900), h:X(18), margin:0, fontFace:TEXT, fontSize:PT(10), color:C.dim, valign:"middle" });
+    { x:X(168), y:X(684), w:X(900), h:X(18), margin:0, fontFace:TEXT, fontSize:PT(10), color:C.white, valign:"middle" });
 }
 
 // ════════════════ SLIDE 2 — 요약 ════════════════
@@ -124,7 +127,7 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   const s = pres.addSlide();
   s.background = { path: BG_BODY };
   header(s, "요약 · Executive Summary");
-  centerTitle(s, "Executive Summary", [
+  centerTitle(s, null, [
     r("한 줄 요약 — ", {color:C.white}), r("시장의 주체", {color:C.blueB}), r("가 바뀌고 있다", {color:C.white})
   ]);
   // 풀쿼트
@@ -133,7 +136,7 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   s.addText('"프로젝트 관리의 주체가 사람에서 인공지능으로 이동 중이다."', { x:X(96), y:X(204), w:X(1100), h:X(30), margin:0,
     fontFace:TITLE, fontSize:PT(19), color:C.white, valign:"middle" });
   s.addText("GARTNER · MCKINSEY · BCG · DELOITTE 종합 진단", { x:X(96), y:X(238), w:X(1100), h:X(20), margin:0,
-    fontFace:TEXT, fontSize:PT(11), color:C.dim, charSpacing:1 });
+    fontFace:TEXT, fontSize:PT(11), color:C.gray2, charSpacing:1 });
   // 4 지표 카드
   const cards = [
     ["한국 시장 점유", [r("2위 ",{color:C.white}), r("12%",{color:C.blueB})], "Amaranth 10 한국 그룹웨어·협업툴 시장 점유율 (가비아 하이웍스 시장조사)"],
@@ -158,7 +161,7 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   const s = pres.addSlide();
   s.background = { path: BG_BODY };
   header(s, "핵심 발견 · Key Findings");
-  centerTitle(s, "Key Findings", [ r("시장은 ",{color:C.white}), r("3가지 큰 흐름",{color:C.blueB}), r("으로 재편 중",{color:C.white}) ]);
+  centerTitle(s, null, [ r("시장은 ",{color:C.white}), r("3가지 큰 흐름",{color:C.blueB}), r("으로 재편 중",{color:C.white}) ]);
   const cw=368, gap=24, x0=64, cy=196, ch=448;
   const cols = [
     ["흐름 ① 시장 패러다임 전환", [r("AI 에이전트 시장",{color:C.blueB}), r("이 본 시장보다 훨씬 크다",{color:C.white})],
@@ -187,7 +190,7 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   const s = pres.addSlide();
   s.background = { path: BG_BODY };
   header(s, "시장 동향 · Market Trends");
-  centerTitle(s, "Market Trends", [ r("글로벌 트렌드 ",{color:C.white}), r("7가지",{color:C.blueB}), r("와 한국 시장 ",{color:C.white}), r("1~3위",{color:C.purpleB}) ]);
+  centerTitle(s, null, [ r("글로벌 트렌드 ",{color:C.white}), r("7가지",{color:C.blueB}), r("와 한국 시장 ",{color:C.white}), r("1~3위",{color:C.purpleB}) ]);
   // 좌: 글로벌 트렌드 카드
   card(s, 64, 196, 558, 448, C.card);
   lab(s, 86, 216, 500, "A. 글로벌 트렌드");
@@ -231,13 +234,13 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   const s = pres.addSlide();
   s.background = { path: BG_BODY };
   header(s, "시장 규모 · Market Size");
-  centerTitle(s, "Market Size", [ r("두 개의 시장 — ",{color:C.white}), r("본 시장",{color:C.blueB}), r("과 ",{color:C.white}), r("더 큰 시장",{color:C.purpleB}) ]);
+  centerTitle(s, null, [ r("두 개의 시장 — ",{color:C.white}), r("본 시장",{color:C.blueB}), r("과 ",{color:C.white}), r("더 큰 시장",{color:C.purpleB}) ]);
   // 좌 카드
   card(s, 64, 196, 558, 448, C.card);
   lab(s, 86, 214, 514, "글로벌 프로젝트 관리 시장");
   s.addText([ r("9억",{color:C.blueB}), r(" 달러 (2025)",{color:C.gray, fontSize:PT(19)}) ], { x:X(86), y:X(236), w:X(514), h:X(52), margin:0, fontFace:TITLE, bold:true, fontSize:PT(48), valign:"middle" });
   s.addText([ r("22.9억",{color:C.gray}), r(" 달러 (2033) · 연 12.3%",{color:C.gray2, fontSize:PT(13)}) ], { x:X(86), y:X(292), w:X(514), h:X(32), margin:0, fontFace:TITLE, bold:true, fontSize:PT(28), valign:"middle" });
-  s.addText("자료 종합: 2025년 6.43~9억 달러 · 연평균 10~12% 성장\nMetastat Insights · Mordor · ERP Today · Business Research Insights", { x:X(86), y:X(330), w:X(514), h:X(40), margin:0, fontFace:TEXT, fontSize:PT(11), color:C.dim, lineSpacingMultiple:1.3 });
+  s.addText("자료 종합: 2025년 6.43~9억 달러 · 연평균 10~12% 성장\nMetastat Insights · Mordor · ERP Today · Business Research Insights", { x:X(86), y:X(330), w:X(514), h:X(40), margin:0, fontFace:TEXT, fontSize:PT(11), color:C.gray2, lineSpacingMultiple:1.3 });
   s.addShape(pres.shapes.LINE, { x:X(86), y:X(384), w:X(514), h:0, line:{color:C.tblLine, width:0.75} });
   lab(s, 86, 396, 514, "한국 PMS 시장 · 외부 근거");
   tbl(s, [
@@ -245,14 +248,14 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
     [td("연평균 성장률",{color:C.gray}), td([r("20.8%",{bold:true,color:C.white}),r(" (글로벌 약 2배)",{color:C.gray})])],
     [td("2030년 전망",{color:C.gray}), td("약 1조 5천억원")],
   ], 86, 422, 514, [200, 314], { fontSize:PT(12), rowH:Array(3).fill(X(40)) });
-  s.addText("Grand View Research · Bonafide Research", { x:X(86), y:X(548), w:X(514), h:X(16), margin:0, fontFace:TEXT, fontSize:PT(10.5), color:C.dim });
+  s.addText("Grand View Research · Bonafide Research", { x:X(86), y:X(548), w:X(514), h:X(16), margin:0, fontFace:TEXT, fontSize:PT(10.5), color:C.gray2 });
   // 우 카드
   card(s, 646, 196, 570, 448, C.card);
   s.addShape(pres.shapes.RECTANGLE, { x:X(646), y:X(196), w:X(4), h:X(448), fill:{color:C.purple} });
   lab(s, 668, 214, 526, "AI 에이전트 시장 · 별도의 거대 시장", C.purple);
   s.addText([ r("78.4억",{color:C.purpleB}), r(" 달러 (2025)",{color:C.gray, fontSize:PT(19)}) ], { x:X(668), y:X(236), w:X(526), h:X(52), margin:0, fontFace:TITLE, bold:true, fontSize:PT(48), valign:"middle" });
   s.addText([ r("526.2억",{color:C.gray}), r(" 달러 (2030) · 연 46.3%",{color:C.gray2, fontSize:PT(13)}) ], { x:X(668), y:X(292), w:X(526), h:X(32), margin:0, fontFace:TITLE, bold:true, fontSize:PT(28), valign:"middle" });
-  s.addText("본 시장이 프로젝트 관리 시장보다 훨씬 큼\nOneReach · Gartner Strategic Predictions 2026", { x:X(668), y:X(330), w:X(526), h:X(40), margin:0, fontFace:TEXT, fontSize:PT(11), color:C.dim, lineSpacingMultiple:1.3 });
+  s.addText("본 시장이 프로젝트 관리 시장보다 훨씬 큼\nOneReach · Gartner Strategic Predictions 2026", { x:X(668), y:X(330), w:X(526), h:X(40), margin:0, fontFace:TEXT, fontSize:PT(11), color:C.gray2, lineSpacingMultiple:1.3 });
   s.addShape(pres.shapes.LINE, { x:X(668), y:X(384), w:X(526), h:0, line:{color:C.tblLine, width:0.75} });
   lab(s, 668, 396, 526, "Gartner 지출 전망 · 폭발 성장");
   tbl(s, [
@@ -269,7 +272,7 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   const s = pres.addSlide();
   s.background = { path: BG_BODY };
   header(s, "한국 시장 위치 · Korea Position");
-  centerTitle(s, "Korea Position", [ r("Amaranth 10 한국 ",{color:C.white}), r("2위 · 12%",{color:C.blueB}), r(" 점유",{color:C.white}) ]);
+  centerTitle(s, null, [ r("Amaranth 10 한국 ",{color:C.white}), r("2위 · 12%",{color:C.blueB}), r(" 점유",{color:C.white}) ]);
   card(s, 64, 196, 558, 386, C.card);
   lab(s, 86, 214, 514, "한국 그룹웨어·협업툴 시장 점유");
   tbl(s, [
@@ -299,14 +302,14 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   const s = pres.addSlide();
   s.background = { path: BG_BODY };
   header(s, "경쟁 분석 · Competitors");
-  centerTitle(s, "Global Competitors", [ r("글로벌 5개사 모두 ",{color:C.white}), r("AI 에이전트",{color:C.blueB}), r(" 본격 침투 중",{color:C.white}) ]);
+  centerTitle(s, null, [ r("글로벌 5개사 모두 ",{color:C.white}), r("AI 에이전트",{color:C.blueB}), r(" 본격 침투 중",{color:C.white}) ]);
   tbl(s, [
     [th("솔루션"), th("AI 에이전트"), th("도입 현황 · 출시 시점")],
-    [tdHi([r("Jira (Atlassian)",{bold:true,color:C.blueB}),r("\n글로벌 1위",{color:C.dim,fontSize:PT(10)})]), tdHi("Rovo Agents",{bold:true,color:C.white}), tdHi([r("엔터프라이즈 클라우드 고객 90%+ 사용",{bold:true,color:C.white}),r(" · 월간 활성 500만 · 240만 AI 에이전트 사용 사례 · Jira Agents 2026.02 출시",{color:C.gray})])],
-    [td([r("Monday.com",{bold:true,color:C.white}),r("\n시각 보드 강자",{color:C.dim,fontSize:PT(10)})]), td("Sidekick + Agents",{bold:true,color:C.white}), td([r("AI 성숙도 50점 중 36점 (1위 동률)",{bold:true,color:C.white}),r(" · 자연어로 작업·일정·회의록 생성 · 보드 자동 스캔 위험 감지",{color:C.gray})])],
-    [td([r("Asana",{bold:true,color:C.white}),r("\n2025 Q4 1.88억$",{color:C.dim,fontSize:PT(10)})]), td("AI Studio + Teammates",{bold:true,color:C.white}), td([r("AI Studio",{bold:true,color:C.white}),r(" 무코드 워크플로 빌더 · ",{color:C.gray}),r("AI Teammates",{bold:true,color:C.white}),r(" 2025 가을 베타 · 양의 자유 현금 흐름 달성",{color:C.gray})])],
-    [td([r("ClickUp",{bold:true,color:C.white}),r("\n외부 8,000개+",{color:C.dim,fontSize:PT(10)})]), td("Brain + Super Agents",{bold:true,color:C.white}), td([r("Autopilot",{bold:true,color:C.white}),r(" 룰 + 자동 작업 할당 + 하위 작업·종속성 자동 생성 · Brain2 AI $9/사용자/월",{color:C.gray})])],
-    [td([r("Notion",{bold:true,color:C.white}),r("\n월 +0.6%p 성장",{color:C.dim,fontSize:PT(10)})]), td("Notion AI",{bold:true,color:C.white}), td("Q&A 검색 + Autofill + AI Meeting Notes · 2025.05 단독 상품 종료 후 Business·Enterprise 통합",{color:C.gray})],
+    [tdHi([r("Jira (Atlassian)",{bold:true,color:C.blueB}),r("\n글로벌 1위",{color:C.gray2,fontSize:PT(10)})]), tdHi("Rovo Agents",{bold:true,color:C.white}), tdHi([r("엔터프라이즈 클라우드 고객 90%+ 사용",{bold:true,color:C.white}),r(" · 월간 활성 500만 · 240만 AI 에이전트 사용 사례 · Jira Agents 2026.02 출시",{color:C.gray})])],
+    [td([r("Monday.com",{bold:true,color:C.white}),r("\n시각 보드 강자",{color:C.gray2,fontSize:PT(10)})]), td("Sidekick + Agents",{bold:true,color:C.white}), td([r("AI 성숙도 50점 중 36점 (1위 동률)",{bold:true,color:C.white}),r(" · 자연어로 작업·일정·회의록 생성 · 보드 자동 스캔 위험 감지",{color:C.gray})])],
+    [td([r("Asana",{bold:true,color:C.white}),r("\n2025 Q4 1.88억$",{color:C.gray2,fontSize:PT(10)})]), td("AI Studio + Teammates",{bold:true,color:C.white}), td([r("AI Studio",{bold:true,color:C.white}),r(" 무코드 워크플로 빌더 · ",{color:C.gray}),r("AI Teammates",{bold:true,color:C.white}),r(" 2025 가을 베타 · 양의 자유 현금 흐름 달성",{color:C.gray})])],
+    [td([r("ClickUp",{bold:true,color:C.white}),r("\n외부 8,000개+",{color:C.gray2,fontSize:PT(10)})]), td("Brain + Super Agents",{bold:true,color:C.white}), td([r("Autopilot",{bold:true,color:C.white}),r(" 룰 + 자동 작업 할당 + 하위 작업·종속성 자동 생성 · Brain2 AI $9/사용자/월",{color:C.gray})])],
+    [td([r("Notion",{bold:true,color:C.white}),r("\n월 +0.6%p 성장",{color:C.gray2,fontSize:PT(10)})]), td("Notion AI",{bold:true,color:C.white}), td("Q&A 검색 + Autofill + AI Meeting Notes · 2025.05 단독 상품 종료 후 Business·Enterprise 통합",{color:C.gray})],
   ], 64, 196, 1152, [200, 230, 722], { fontSize:PT(11.5), rowH:[X(32)].concat(Array(5).fill(X(64))) });
   embar(s, 596, [ r("함의",{color:C.blueB}), r(" — 글로벌 5개사 모두 자율 에이전트 단계 진입 중. KISS도 ",{color:C.white}), r("자체 AI 에이전트 출시 가속",{color:C.purpleB}), r(" 필요",{color:C.white}) ]);
   footer(s, "07");
@@ -317,7 +320,7 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   const s = pres.addSlide();
   s.background = { path: BG_BODY };
   header(s, "신흥 카테고리 · AI-Native");
-  centerTitle(s, "Emerging Category", [ r("처음부터 ",{color:C.white}), r("AI 중심으로 재설계",{color:C.purpleB}), r("된 신규 진입자",{color:C.white}) ]);
+  centerTitle(s, null, [ r("처음부터 ",{color:C.white}), r("AI 중심으로 재설계",{color:C.purpleB}), r("된 신규 진입자",{color:C.white}) ]);
   lab(s, 64, 192, 600, "시장 진화 3단계");
   const gens = [
     ["1세대 · ~2023년","사람이 도구로 관리","Notion · Jira · Asana 등 기존 솔루션", false],
@@ -347,7 +350,7 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   const s = pres.addSlide();
   s.background = { path: BG_BODY };
   header(s, "차별화 포지셔닝 · Positioning");
-  centerTitle(s, "Differentiation", [ r("Amaranth 10 KISS의 ",{color:C.white}), r("차별화 6축",{color:C.blueB}) ]);
+  centerTitle(s, null, [ r("Amaranth 10 KISS의 ",{color:C.white}), r("차별화 6축",{color:C.blueB}) ]);
   const items = [
     ["① 가격 경쟁력", C.blueB, [r("Amaranth 10 라이선스 통합 — ",{color:C.gray}),r("별도 구매 없이 사용",{bold:true,color:C.white}),r(". 글로벌 7~28달러 대비 우위.",{color:C.gray})]],
     ["② 모듈 통합", C.blueB, [r("법무·고객관계관리·게시판·연락처 + ONE AI 통합. ",{color:C.gray}),r("어디에도 없는 ERP+협업+AI 통합",{bold:true,color:C.white}),r(".",{color:C.gray})]],
@@ -372,7 +375,7 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   const s = pres.addSlide();
   s.background = { path: BG_BODY };
   header(s, "종합 분석 · SWOT");
-  centerTitle(s, "SWOT Analysis", [ r("강점·약점·기회·위협 ",{color:C.white}), r("한눈 정리",{color:C.blueB}) ]);
+  centerTitle(s, null, [ r("강점·약점·기회·위협 ",{color:C.white}), r("한눈 정리",{color:C.blueB}) ]);
   const Q = [
     ["강점 Strengths", C.good, ["한국 그룹웨어 2위 (12% 점유) · Amaranth 10 168% 성장","Amaranth 10 모듈 통합 + ERP 내장 통합","ONE AI 1년 7,000사·118K명 도입 속도","AI 에이전트 마켓플레이스 국내 최초 (2025.12)","자율 경영 전략 + 삼일 PwC 공식 평가"]],
     ["약점 Weaknesses", C.warn, ["프로젝트 관리 단독 기능 깊이 부족 (Notion·Jira·Asana 대비)","한국 중심 · 글로벌 인지도 격차","시각 협업 기능 (간트·칸반) 글로벌 대비 표준","외부 연동 제한적 (ClickUp 8,000개+ 대비)","글로벌 AI 에이전트 인지도 격차 — Rovo 90%+ 도입"]],
@@ -398,7 +401,7 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   const s = pres.addSlide();
   s.background = { path: BG_BODY };
   header(s, "권장 전략 · Recommendations");
-  centerTitle(s, "Recommendations", [ r("권장 전략 ",{color:C.white}), r("5순위",{color:C.blueB}) ]);
+  centerTitle(s, null, [ r("권장 전략 ",{color:C.white}), r("5순위",{color:C.blueB}) ]);
   const strat = [
     ["1","최우선","AI 에이전트 친화 프로젝트 관리 플랫폼으로 재포지셔닝", [r("단순 프로젝트 관리가 아닌 ",{color:C.gray2}),r("AI 에이전트가 잘 사용할 수 있도록 설계된 플랫폼",{bold:true,color:C.white}),r("으로 재포지셔닝. Gartner '2026년 말 전체 기업 앱 40% 통합' 예측 대응. 모듈 단일 라이선스 + 자체 ONE AI 연계라는 고유 강점 활용 — 외부 솔루션이 못 가진 ",{color:C.gray2}),r("데이터 주권·통합 접근 우위",{bold:true,color:C.purpleB}),r(" 강조.",{color:C.gray})]],
     ["2","","3단계 계층 + 자동 보고서 정착", [r("진행 중인 고도화 재설계 정착 — 프로젝트 → 업무 → 할 일 3단계 + 자동 보고서 누적. ",{color:C.gray2}),r("AI 에이전트가 작업 단위로 자율 수행 가능한 데이터 구조 토대",{bold:true,color:C.white}),r(".",{color:C.gray})]],
@@ -409,7 +412,7 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   card(s, 64, 196, 1152, 448, C.card);
   const rowH=[120, 78, 78, 78, 78]; let yy=210;
   strat.forEach((st,i)=>{
-    s.addText([ r(st[0],{color:C.blueB}), ...(st[1]?[r("\n"+st[1],{color:C.dim, fontSize:PT(9), bold:true})]:[]) ],
+    s.addText([ r(st[0],{color:C.blueB}), ...(st[1]?[r("\n"+st[1],{color:C.gray2, fontSize:PT(9), bold:true})]:[]) ],
       { x:X(86), y:X(yy), w:X(64), h:X(rowH[i]-14), margin:0, fontFace:TITLE, bold:true, fontSize:PT(30), align:"center", valign:"top" });
     s.addText(st[2], { x:X(166), y:X(yy), w:X(1030), h:X(24), margin:0, fontFace:TITLE, bold:true, fontSize:PT(14.5), color:C.white });
     s.addText(st[3], { x:X(166), y:X(yy+26), w:X(1030), h:X(rowH[i]-40), margin:0, fontFace:TEXT, fontSize:PT(12.5), lineSpacingMultiple:1.4, valign:"top" });
@@ -424,7 +427,7 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   const s = pres.addSlide();
   s.background = { path: BG_BODY };
   header(s, "위험 요인 · Risks & Limits");
-  centerTitle(s, "Risks & Limitations", [ r("기회와 함께 보는 ",{color:C.white}), r("위험과 미확인 영역",{color:C.purpleB}) ]);
+  centerTitle(s, null, [ r("기회와 함께 보는 ",{color:C.white}), r("위험과 미확인 영역",{color:C.purpleB}) ]);
   card(s, 64, 196, 558, 448, C.card);
   lab(s, 86, 214, 514, "A. 시장 진화 위험 요인 (Gartner 경고)");
   tbl(s, [
@@ -462,7 +465,7 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
   const s = pres.addSlide();
   s.background = { path: BG_BODY };
   header(s, "다음 사이클 · Next Steps");
-  centerTitle(s, "Next Steps", [ r("다음 단계 ",{color:C.white}), r("3개 사이클",{color:C.blueB}), r("로 이어집니다",{color:C.white}) ]);
+  centerTitle(s, null, [ r("다음 단계 ",{color:C.white}), r("3개 사이클",{color:C.blueB}), r("로 이어집니다",{color:C.white}) ]);
   const cyc = [
     ["사이클 ① 벤치마킹 보고서","글로벌 주요 5개사 + 한국 토종 4개사 + AI 네이티브 신규 진입자 (Construction AI·Plane·Forecast) 정밀 비교 — 별도 사이클 진입."],
     ["사이클 ② 요구사항 정의서","본 시장 분석 + 더존비즈온 자산 (고도화 완료 목표·재설계) + AI 에이전트 친화 플랫폼 요구사항 종합 — 별도 사이클 진입."],
@@ -481,10 +484,10 @@ function tdHi(t, o={}){ return { text:t, options:{ fill:{color:C.tblHi}, ...o } 
     r('"프로젝트 관리의 주체가 사람에서 인공지능으로 이동 중이다."\n',{color:C.white, fontSize:PT(20)}),
     r("Amaranth 10 KISS의 답은 — AI 에이전트 친화 프로젝트 관리 플랫폼.",{color:C.purpleB, bold:true, fontSize:PT(17)}),
   ], { x:X(98), y:X(420), w:X(1000), h:X(76), margin:0, fontFace:TITLE, lineSpacingMultiple:1.3, valign:"middle" });
-  s.addText("2026.05.28 · 차민수 (PM)", { x:X(98), y:X(498), w:X(600), h:X(18), margin:0, fontFace:TEXT, fontSize:PT(11), color:C.dim, charSpacing:1 });
+  s.addText("2026.05.28 · 차민수 (PM)", { x:X(98), y:X(498), w:X(600), h:X(18), margin:0, fontFace:TEXT, fontSize:PT(11), color:C.gray2, charSpacing:1 });
   // Thank You
   s.addText("Thank You", { x:X(816), y:X(556), w:X(400), h:X(40), margin:0, fontFace:TITLE, bold:true, fontSize:PT(30), color:C.purpleB, align:"right" });
-  s.addText("Q & A", { x:X(816), y:X(598), w:X(400), h:X(20), margin:0, fontFace:TEXT, fontSize:PT(12), color:C.dim, align:"right" });
+  s.addText("Q & A", { x:X(816), y:X(598), w:X(400), h:X(20), margin:0, fontFace:TEXT, fontSize:PT(12), color:C.gray2, align:"right" });
   footer(s, "13");
 }
 

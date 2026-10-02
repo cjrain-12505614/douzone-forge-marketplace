@@ -2,7 +2,6 @@
   "_설명": "fbq.py new --spec 이파일.json --out _개인/sessions/{작업}/질문/{YYYYMMDD-주제}.html 로 1회차 페이지를 만든다. 밑줄(_)로 시작하는 키는 설명용이라 무시한다. title·kicker·h1·카드 title 은 글자, 나머지(lead·summary·why·visual·name·desc·then·rec_text·cost)는 HTML 을 쓸 수 있다. summary·name·desc·then·rec_text·cost 는 한 줄 안에 들어가는 인라인 HTML(<b>·<code>·<a>)만. 이 예시의 시안 demo/poc-a.html·demo/poc-b.html 은 페이지 폴더 아래 demo/ 에 따로 만들어 둬야 한다 — 없으면 카드에 「시안 파일을 찾을 수 없습니다」가 나온다.",
   "title": "[예시] 검색 결과 화면 PoC 고르기",
   "fbKey": "20261001-search-poc",
-  "kicker": "예시 · 질문 페이지 사용법 · 1회차",
   "h1": "[예시] 검색 결과 화면 PoC 고르기",
   "lead": [
     "이 페이지는 질문 데이터 형식을 보여 주는 <b>예시</b>입니다. 이번 회차에는 검색 결과를 보여 줄 화면 모양, 결과를 고치는 순서, 시안을 몇 개까지 나란히 둘지 세 가지를 정합니다.",
