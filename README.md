@@ -41,7 +41,7 @@ claude plugin update douzone-forge@douzone-forge-marketplace
 
 ## 제3자 구성요소
 
-- `douzone-forge-v*/skills/dz-frontend-design/upstream/frontend-design-SKILL.md` — Anthropic `frontend-design` 스킬 원문(출처: [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) `plugins/frontend-design/skills/frontend-design/SKILL.md`). Apache License 2.0 — 같은 폴더의 `LICENSE.txt` 참조. 원문은 고치지 않고 그대로 두며, 더존 맥락 보강은 `SKILL.md` 에 따로 적었다(변경 고지 포함). v1.33.0(2026-10-02)부터 원문과 라이선스를 함께 싣는다.
+- `douzone-forge-v*/skills/dz-frontend-design/upstream/frontend-design-SKILL.md` — Anthropic `frontend-design` 스킬 원문(출처: [anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official) `plugins/frontend-design/skills/frontend-design/SKILL.md`). Apache License 2.0 — 사본의 상위 폴더인 `douzone-forge-v*/skills/dz-frontend-design/LICENSE.txt` 참조(원본 스킬 폴더의 `LICENSE.txt` 와 같은 파일). 원문은 고치지 않고 그대로 두며, 더존 맥락 보강은 `SKILL.md` 에 따로 적었다(변경 고지 포함). v1.33.0(2026-10-02)부터 원문과 라이선스를 함께 싣는다.
 
 ## 소스 레포
 
